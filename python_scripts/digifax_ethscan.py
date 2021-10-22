@@ -6,7 +6,7 @@ from rich.console import Console
 
 console = Console()
 
-API_KEY = "1XCMJP7VNAXU1NVSKS4C7XBM1ET77SYNVE"
+API_KEY = ""
 ADDR = "0xddbd2b932c763ba5b1b7ae3b362eac3e8d40121a"
 
 eth = Etherscan(API_KEY)
