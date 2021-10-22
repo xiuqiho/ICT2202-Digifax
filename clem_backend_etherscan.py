@@ -5,7 +5,6 @@ Using https://github.com/pcko1/etherscan-python as reference
 from etherscan import Etherscan
 from secrets import API_KEY
 
-
 TARGET_ADDR = "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A".lower()
 WEI = 0.000000000000000001  # 10e-19
 SPACERS = "=" * 80
@@ -19,7 +18,7 @@ def get_total_txns(api_obj, target_addr):
 
 def get_ext_txns(api_obj, target_addr, direction):
     """This function allow you to list all the incoming or outgoing txns of a wallet address
-    Information extracted: timeStamp, from, to, value, blockNumber"""
+    Information extracted: timeStamp, blockNumber, from, to, value"""
     list_full_txns = api_obj.get_normal_txs_by_address(target_addr, 0, 9999999999, 'age')
     res = []
     for txn in list_full_txns:
@@ -27,12 +26,12 @@ def get_ext_txns(api_obj, target_addr, direction):
         if len(txn['to']) > 1:
             if direction == 'outgoing':
                 if txn['from'] == target_addr:
-                    res.append(
-                        f"{txn['timeStamp']}, {txn['blockNumber']}, {txn['from']}, {txn['to']}, {int(txn['value']) * WEI}")
+                    res.append([
+                        f"{txn['timeStamp']}, {txn['blockNumber']}, {txn['from']}, {txn['to']}, {int(txn['value']) * WEI}"])
             if direction == 'incoming':
                 if txn['to'] == target_addr:
-                    res.append(
-                        f"{txn['timeStamp']}, {txn['blockNumber']}, {txn['from']}, {txn['to']}, {int(txn['value']) * WEI}")
+                    res.append([
+                        f"{txn['timeStamp']}, {txn['blockNumber']}, {txn['from']}, {txn['to']}, {int(txn['value']) * WEI}"])
             else:
                 pass
     print(res)
