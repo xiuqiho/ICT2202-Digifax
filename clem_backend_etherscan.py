@@ -1,5 +1,7 @@
 """
-Using https://github.com/pcko1/etherscan-python as reference
+References:
+https://github.com/pcko1/etherscan-python
+https://etherscan.io/txs?a=0xddbd2b932c763ba5b1b7ae3b362eac3e8d40121a
 """
 
 from etherscan import Etherscan
