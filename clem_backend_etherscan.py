@@ -1,6 +1,10 @@
+"""
+Using https://github.com/pcko1/etherscan-python as reference
+"""
+
 from etherscan import Etherscan
 from secrets import API_KEY
-from json import dumps
+
 
 TARGET_ADDR = "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A".lower()
 WEI = 0.000000000000000001  # 10e-19
