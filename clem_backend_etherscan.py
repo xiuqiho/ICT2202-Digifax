@@ -61,7 +61,7 @@ def get_ext_txns(api_obj, target_addr, direction):
                         f"{txn['timeStamp']}, {txn['blockNumber']}, {get_labels(txn['to'])}, {txn['from']}, {txn['to']}, {int(txn['value']) * WEI}"])
             else:
                 pass
-    return res
+    return {target_addr: res}
 
 
 def main():
@@ -76,8 +76,9 @@ def main():
     print(SPACERS)
 
     res = get_ext_txns(api_obj, TARGET_ADDR, 'outgoing')  # can use outgoing or incoming
-    for line in res:
-        print(line)
+    # for line in res:
+    #     print(line)
+    print(res)
 
 
 if __name__ == "__main__":
