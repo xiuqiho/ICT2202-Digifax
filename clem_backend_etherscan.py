@@ -12,15 +12,18 @@ from urllib.request import Request, urlopen  # Python 3
 from concurrent.futures import ThreadPoolExecutor
 
 import pprint
+
 pp = pprint.PrettyPrinter(indent=4)
 
 from rich.console import Console
+
 console = Console()
 from rich.progress import Progress
 
 
 def print_divider(message):
     console.rule(message, style="bold red")
+
 
 def parse_message(message, tabs=0, symbol=None, symbol_style=None):
     if not symbol:
@@ -29,9 +32,11 @@ def parse_message(message, tabs=0, symbol=None, symbol_style=None):
         return "\t" * tabs + f"[{symbol_style}][{symbol}][/{symbol_style}] " + message
     return "\t" * tabs + f"[{symbol}] " + message
 
+
 def print_info(message, tabs=0, symbol="*"):
     message = parse_message(message, tabs, symbol)
     console.print(message, style="bold white")
+
 
 def print_debug(message, tabs=0):
     message = parse_message(message, tabs, symbol="*")
@@ -151,7 +156,6 @@ def get_ext_txns(api_obj, target_addr, direction="both"):
 
             if len(res) == expected_txn:
                 break
-
 
     return {target_addr: res}
 
