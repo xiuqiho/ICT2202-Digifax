@@ -12,20 +12,26 @@ from urllib.request import Request, urlopen  # Python 3
 from concurrent.futures import ThreadPoolExecutor
 
 import pprint
+
 pp = pprint.PrettyPrinter(indent=4)
 
 from rich.console import Console
-from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn, TimeElapsedColumn, FileSizeColumn, TotalFileSizeColumn
-progress = Progress(TextColumn("[bold blue]Compiling Transactions...", justify="right"), BarColumn(bar_width=None), "[progress.percentage]{task.percentage:>3.1f}%", "•", TimeRemainingColumn(),"•", TimeElapsedColumn(), FileSizeColumn(), TotalFileSizeColumn())
+from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn, TimeElapsedColumn, FileSizeColumn, \
+    TotalFileSizeColumn
+
+progress = Progress(TextColumn("[bold blue]Compiling Transactions...", justify="right"), BarColumn(bar_width=None),
+                    "[progress.percentage]{task.percentage:>3.1f}%", "•", TimeRemainingColumn(), "•",
+                    TimeElapsedColumn(), FileSizeColumn(), TotalFileSizeColumn())
 
 import time
 
-TARGET_ADDR = "0xDa007777D86AC6d989cC9f79A73261b3fC5e0DA0".lower()
-# TARGET_ADDR = "0x7129bED9a5264F0cF279110ECE27add9B6662bD5".lower()
+# TARGET_ADDR = "0xDa007777D86AC6d989cC9f79A73261b3fC5e0DA0".lower()
+TARGET_ADDR = "0x7129bED9a5264F0cF279110ECE27add9B6662bD5".lower()
 # TARGET_ADDR = "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A".lower()
 ETHERSCAN_SITE = "https://etherscan.io/address/"
 WEI = 0.000000000000000001  # 10e-19
 SPACERS = "=" * 50
+
 
 ##### [!] All comments with [!] can be deleted after reading
 
@@ -90,14 +96,14 @@ class DigiFax_EthScan:
 
         return len_all_txn, len_incoming_txn, len_outgoing_txn, len_contract_creation_txn
 
-
     # [!] Added the "both" option, which will include both incoming and outgoing directions
     def get_ext_txns(self, target_addr, direction="both"):
         """This function allow you to list all the incoming or outgoing txns of a wallet address
-        Information extracted: timeStamp, blockNumber, labels, from, to, value"""
+        Information extracted: timeStamp, blockNumber, hash, labels, from, to, value"""
 
         list_full_txns = self.EtherScanObj.get_normal_txs_by_address(target_addr, 0, 99999999, 'age')
 
+        dict_indiv_txn = {}
         res = []
         expected_txn = 0
 
@@ -124,19 +130,30 @@ class DigiFax_EthScan:
                     # txn["to_labels"] = self.get_labels(txn["to"])
                     # txn["from_labels"] = self.get_labels(txn["from"])
                     txn["value_in_eth"] = int(txn['value']) * WEI
+
+                    dict_indiv_txn = {
+                        'timestamp': txn['timeStamp'],
+                        'blockNumber': txn['blockNumber'],
+                        'hash': txn['hash'],
+                        'from': txn['from'],
+                        'to': txn['to'],
+                        'value': txn['value_in_eth']}
+
                     if direction == 'outgoing' or direction == "both":
                         if txn['from'] == target_addr:
                             txn["direction"] = "outgoing"
-                            res.append(txn.copy())
+                            res.append(dict_indiv_txn.copy())
                     if direction == 'incoming' or direction == "both":
                         if txn['to'] == target_addr:
                             txn["direction"] = "outgoing"
-                            res.append(txn.copy())
+                            res.append(dict_indiv_txn.copy())
 
                 if len(res) == expected_txn:
                     break
 
         return {target_addr: res}
+        # print()
+        # print(res)
 
     def print_divider(self, message):
         self.console.rule(message, style="bold red")
@@ -173,9 +190,10 @@ def main():
     digi.print_info(f'Contract Creation: {contract_creation}', 1)
     digi.print_info(f'Labels: {digi.get_labels(TARGET_ADDR)}')
 
-    res = digi.get_ext_txns(TARGET_ADDR, 'both')  # can use outgoing or incoming
+    res = digi.get_ext_txns(TARGET_ADDR, 'outgoing')  # can use outgoing or incoming
 
-    # pp.pprint(res)
+    pp.pprint('')
+    pp.pprint(res)
 
 
 if __name__ == "__main__":
