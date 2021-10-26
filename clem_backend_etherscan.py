@@ -229,7 +229,6 @@ class DigiFax_EthScan:
                     self.ADDR_TXNS_SUMMARISED[k]['incoming'].append(indiv_txn)
 
         print(f'{SPACERS}')
-        return self.ADDR_TXNS_SUMMARISED
 
 
 def main():
@@ -256,7 +255,8 @@ def main():
     res = digi.get_ext_txns(p)  # can use outgoing or incoming
 
     pp.pprint("")
-    pp.pprint(digi.uniquefy_res(res))
+    digi.uniquefy_res(res)
+    pp.pprint(digi.ADDR_TXNS_SUMMARISED)
 
     # pp.pprint(digi.ADDR_TXNS)
 
