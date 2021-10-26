@@ -166,16 +166,28 @@ class DigiFax_EthScan:
                     'to': txn['to'],
                     'to_labels': self.get_addr_labels(txn["to"]),
                     'value': int(txn['value']) * WEI}
-                if direction == OUTGOING_FLAG or direction == BOTH_FLAG:
-                    if txn['from'] == target_addr:
-                        dict_indiv_txn.update({"direction": OUTGOING_FLAG})
-                        res.append(dict_indiv_txn.copy())
-                        progress.update(task_id, advance=1)
-                if direction == INCOMING_FLAG or direction == BOTH_FLAG:
-                    if txn['to'] == target_addr:
-                        dict_indiv_txn.update({"direction": INCOMING_FLAG})
-                        res.append(dict_indiv_txn.copy())
-                        progress.update(task_id, advance=1)
+
+                if txn['from'] == target_addr:
+                    dict_indiv_txn.update({"direction": OUTGOING_FLAG})
+                    res.append(dict_indiv_txn.copy())
+                    progress.update(task_id, advance=1)
+                if txn['to'] == target_addr:
+                    dict_indiv_txn.update({"direction": INCOMING_FLAG})
+                    res.append(dict_indiv_txn.copy())
+                    progress.update(task_id, advance=1)
+
+                ## BUGGY COS OF THE BOTH_FLAG
+                # if direction == OUTGOING_FLAG or direction == BOTH_FLAG:
+                #     if txn['from'] == target_addr:
+                #         dict_indiv_txn.update({"direction": OUTGOING_FLAG})
+                #         res.append(dict_indiv_txn.copy())
+                #         progress.update(task_id, advance=1)
+                # if direction == INCOMING_FLAG or direction == BOTH_FLAG:
+                #     if txn['to'] == target_addr:
+                #         dict_indiv_txn.update({"direction": INCOMING_FLAG})
+                #         res.append(dict_indiv_txn.copy())
+                #         progress.update(task_id, advance=1)
+                ## /BUGGY COS OF THE BOTH_FLAG
 
             if len(res) == expected_txn:
                 break
@@ -205,7 +217,6 @@ class DigiFax_EthScan:
 
     def uniquefy_res(self, dict_all_txn):
         """This function will split the txns into unique incoming or outgoing txns"""
-        print(dict_all_txn)
         for k, v in dict_all_txn.items():
 
             if k not in self.ADDR_TXNS_SUMMARISED:
@@ -218,8 +229,7 @@ class DigiFax_EthScan:
                     self.ADDR_TXNS_SUMMARISED[k]['incoming'].append(indiv_txn)
 
         print(f'{SPACERS}')
-        print(self.ADDR_TXNS_SUMMARISED)
-        return 'return from uniquefy_res()'
+        return self.ADDR_TXNS_SUMMARISED
 
 
 def main():
