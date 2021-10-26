@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen  # Python 3
 
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
+import sys
 import time
 import pprint
 
@@ -43,6 +44,9 @@ def print_info(message, tabs=0, symbol="*"):
     message = parse_message(message, tabs, symbol)
     console.print(message, style="bold white")
 
+def print_impt(message, tabs=0, symbol="!"):
+    message = parse_message(message, tabs, symbol)
+    console.print(message, style="bold red")
 
 def print_debug(message, tabs=0):
     message = parse_message(message, tabs, symbol="*")
@@ -55,6 +59,7 @@ SPACERS = "=" * 50
 INCOMING_FLAG = 0
 OUTGOING_FLAG = 1
 BOTH_FLAG = 69
+EXPORT_DATA_KEYWORD = "ADDR"
 
 
 class DigiFax_EthScan:
@@ -77,6 +82,19 @@ class DigiFax_EthScan:
     def get_addr_balance(self, target_addr) -> int:
         """Returns the balance of a particular address in Ether"""
         return int(self.EtherScanObj.get_eth_balance(target_addr)) * WEI
+
+    def export_data(self) -> dict:
+        print_impt("Exporting data..")
+
+        all_data = {}
+
+        for attrib in dir(self):
+            if attrib and EXPORT_DATA_KEYWORD in attrib:
+                # Only in python > 3.5
+                all_data = {**{attrib : getattr(self, attrib)}, **all_data}
+                print_info(f"Merging attribute [bold yellow][{attrib}][/] ({sys.getsizeof(getattr(self, attrib))} bytes)")
+
+        return all_data
 
     def get_addr_labels(self, target_addr):
         """This function returns the labels of a particular eth address based on etherscans page, returns a list"""
@@ -112,7 +130,16 @@ class DigiFax_EthScan:
             # * is used to unpack the values so it becomes a list
             return [*self.ADDR_TXNS_STATS[target_addr].values()]
 
-        dict_full_txns = self.EtherScanObj.get_normal_txs_by_address(target_addr, 0, 9999999999, 'age')
+        # Set flag to 0
+        asserterror_flag = 0
+
+        while not asserterror_flag:
+            try:
+                dict_full_txns = self.EtherScanObj.get_normal_txs_by_address(target_addr, 0, 9999999999, 'age')
+                # only when there are no errors, and transactions are successfully obtained, will the program proceed
+                asserterror_flag = 1
+            except AssertionError:
+                time.sleep(1)
 
         len_all_txn = len(dict_full_txns)
         len_incoming_txn = 0
@@ -229,7 +256,7 @@ class DigiFax_EthScan:
                 if indiv_txn['direction'] == INCOMING_FLAG:
                     self.ADDR_TXNS_SUMMARISED[k]['incoming'].append(indiv_txn)
 
-        print(f'{SPACERS}')
+        # print(f'{SPACERS}')
 
     def update_statistics(self):
         """This function will update self.ADDR_TXNS_STATS with unique incoming and outgoing txns for each addr"""
@@ -243,38 +270,40 @@ class DigiFax_EthScan:
 def main():
     digi = DigiFax_EthScan()
 
-    p = ["0x0Ea288c16bd3A8265873C8D0754B9b2109b5B810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9",
-         "0xc084350789944A2A1af3c39b32937dcdd2AD2748", "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A",
-         "0x7129bED9a5264F0cF279110ECE27add9B6662bD5"]
+    p = ["0x0Ea288c16bd3A8265873C8D0754B9b2109b5B810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9", "0xc084350789944A2A1af3c39b32937dcdd2AD2748", "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A", "0x7129bED9a5264F0cF279110ECE27add9B6662bD5"]
     # 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE (17m), 0xDa007777D86AC6d989cC9f79A73261b3fC5e0DA0 (5.3k)
     for addr in p:
         addr = addr.lower()
 
-        print_divider(f"{addr}")
-        print_info(f'Ethers: {digi.get_addr_balance(addr)}')
-
-        total_txns, incoming, outgoing, contract_creation = digi.get_addr_stats(addr)
-
-        print_info(f'Number of Transactions: {total_txns}')
-        print_info(f'Incoming: {incoming}', 1)
-        print_info(f'Outgoing: {outgoing}', 1)
-        print_info(f'Contract Creation: {contract_creation}', 1)
-        print_info(f'Labels: {digi.get_addr_labels(addr)}')
+        # print_divider(f"{addr}")
+        # print_info(f'Ethers: {digi.get_addr_balance(addr)}')
+        #
+        # total_txns, incoming, outgoing, contract_creation = digi.get_addr_stats(addr)
+        #
+        # print_info(f'Number of Transactions: {total_txns}')
+        # print_info(f'Incoming: {incoming}', 1)
+        # print_info(f'Outgoing: {outgoing}', 1)
+        # print_info(f'Contract Creation: {contract_creation}', 1)
+        # print_info(f'Labels: {digi.get_addr_labels(addr)}')
 
     res = digi.get_ext_txns(p)  # can use outgoing or incoming
 
-    pp.pprint("")
+    # pp.pprint("")
+
     digi.split_txns_based_on_direction(res)
     digi.update_statistics()
+
     # pp.pprint(digi.ADDR_TXNS_SUMMARISED)
+
+    digi.export_data()
 
     # pp.pprint(digi.ADDR_TXNS)
 
     # for i in digi.ADDR_TXNS:
     #     print_info(f"{i} - {len(digi.ADDR_TXNS[i])} incoming/outgoing txns")
 
-    # for addr in res:
-    #     print_info(f"{addr} - {len(res[addr])} ")
+    for addr in res:
+        print_info(f"{addr} - {len(res[addr])} ")
 
 
 if __name__ == "__main__":
