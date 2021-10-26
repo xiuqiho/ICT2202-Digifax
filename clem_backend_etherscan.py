@@ -234,7 +234,10 @@ class DigiFax_EthScan:
     def update_statistics(self):
         """This function will update self.ADDR_TXNS_STATS with unique incoming and outgoing txns for each addr"""
         # add uniq_incoming and uniq_outgoing to self.ADDR_TXNS_STATS[target_addr] using self.ADDR_TXNS_SUMMARISED
-        pass
+        for k, v in self.ADDR_TXNS_SUMMARISED.items():
+            for dict_elem in self.ADDR_TXNS_SUMMARISED[k]['outgoing']:
+                print(dict_elem)
+            print(SPACERS)
 
 
 def main():
@@ -263,7 +266,7 @@ def main():
     pp.pprint("")
     digi.split_txns_based_on_direction(res)
     digi.update_statistics()
-    pp.pprint(digi.ADDR_TXNS_SUMMARISED)
+    # pp.pprint(digi.ADDR_TXNS_SUMMARISED)
 
     # pp.pprint(digi.ADDR_TXNS)
 
