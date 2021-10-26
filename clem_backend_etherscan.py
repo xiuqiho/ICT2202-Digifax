@@ -129,7 +129,8 @@ class DigiFax_EthScan:
             else:
                 len_contract_creation_txn += 1
 
-        self.ADDR_TXNS_STATS[target_addr] = {"all_txn": len_all_txn, "incoming_txn": len_incoming_txn,
+        self.ADDR_TXNS_STATS[target_addr] = {"all_txn": len_all_txn,
+                                             "incoming_txn": len_incoming_txn,
                                              "outgoing_txn": len_outgoing_txn,
                                              "contract_txn": len_contract_creation_txn}
 
@@ -215,7 +216,7 @@ class DigiFax_EthScan:
 
         return res
 
-    def uniquefy_res(self, dict_all_txn):
+    def split_txns_based_on_direction(self, dict_all_txn):
         """This function will split the txns into unique incoming or outgoing txns"""
         for k, v in dict_all_txn.items():
 
@@ -229,6 +230,11 @@ class DigiFax_EthScan:
                     self.ADDR_TXNS_SUMMARISED[k]['incoming'].append(indiv_txn)
 
         print(f'{SPACERS}')
+
+    def update_statistics(self):
+        """This function will update self.ADDR_TXNS_STATS with unique incoming and outgoing txns for each addr"""
+        # add uniq_incoming and uniq_outgoing to self.ADDR_TXNS_STATS[target_addr] using self.ADDR_TXNS_SUMMARISED
+        pass
 
 
 def main():
@@ -255,7 +261,8 @@ def main():
     res = digi.get_ext_txns(p)  # can use outgoing or incoming
 
     pp.pprint("")
-    digi.uniquefy_res(res)
+    digi.split_txns_based_on_direction(res)
+    digi.update_statistics()
     pp.pprint(digi.ADDR_TXNS_SUMMARISED)
 
     # pp.pprint(digi.ADDR_TXNS)
