@@ -12,18 +12,23 @@ from urllib.request import Request, urlopen  # Python 3
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 import time
 import pprint
+
 pp = pprint.PrettyPrinter(indent=4)
 
 from rich.console import Console
+
 console = Console()
 from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn, FileSizeColumn, \
     TotalFileSizeColumn
+
 progress = Progress(TextColumn("[bold blue]{task.fields[filename]}", justify="right"), BarColumn(bar_width=None),
-                    "[progress.percentage]{task.percentage:>3.1f}%", "•", TimeRemainingColumn(), FileSizeColumn(), TotalFileSizeColumn())
+                    "[progress.percentage]{task.percentage:>3.1f}%", "•", TimeRemainingColumn(), FileSizeColumn(),
+                    TotalFileSizeColumn())
 
 
 def print_divider(message):
     console.rule(f"[bold red][*][/] {message}", style="bold red", align="left")
+
 
 def parse_message(message, tabs=0, symbol=None, symbol_style=None):
     message = str(message)
@@ -33,9 +38,11 @@ def parse_message(message, tabs=0, symbol=None, symbol_style=None):
         return "\t" * tabs + f"[{symbol_style}][{symbol}][/{symbol_style}] " + message
     return "\t" * tabs + f"[{symbol}] " + message
 
+
 def print_info(message, tabs=0, symbol="*"):
     message = parse_message(message, tabs, symbol)
     console.print(message, style="bold white")
+
 
 def print_debug(message, tabs=0):
     message = parse_message(message, tabs, symbol="*")
@@ -91,7 +98,6 @@ class DigiFax_EthScan:
 
         return filtered_res
 
-
     def get_addr_stats(self, target_addr):
         """This function allows you to get the statistics of txns of a wallet addr"""
 
@@ -117,7 +123,9 @@ class DigiFax_EthScan:
             else:
                 len_contract_creation_txn += 1
 
-        self.ADDR_TXNS_STATS[target_addr] = {"all_txn": len_all_txn, "incoming_txn": len_incoming_txn, "outgoing_txn": len_outgoing_txn, "contract_txn": len_contract_creation_txn}
+        self.ADDR_TXNS_STATS[target_addr] = {"all_txn": len_all_txn, "incoming_txn": len_incoming_txn,
+                                             "outgoing_txn": len_outgoing_txn,
+                                             "contract_txn": len_contract_creation_txn}
 
         return [len_all_txn, len_incoming_txn, len_outgoing_txn, len_contract_creation_txn]
 
@@ -151,7 +159,7 @@ class DigiFax_EthScan:
                     'from': txn['from'],
                     'from_labels': self.get_addr_labels(txn["from"]),
                     'to': txn['to'],
-                    'to_labels' : self.get_addr_labels(txn["to"]),
+                    'to_labels': self.get_addr_labels(txn["to"]),
                     'value': int(txn['value']) * WEI}
                 if direction == 'outgoing' or direction == "both":
                     if txn['from'] == target_addr:
@@ -165,7 +173,7 @@ class DigiFax_EthScan:
 
         self.ADDR_TXNS[target_addr] = res
 
-        return {target_addr : res}
+        return {target_addr: res}
 
     # [!] Added the "both" option, which will include both incoming and outgoing directions
     def get_ext_txns(self, list_of_addr, direction="both") -> dict:
@@ -190,7 +198,9 @@ class DigiFax_EthScan:
 def main():
     digi = DigiFax_EthScan()
 
-    p = ["0x0Ea288c16bd3A8265873C8D0754B9b2109b5B810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9", "0xc084350789944A2A1af3c39b32937dcdd2AD2748", "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A", "0x7129bED9a5264F0cF279110ECE27add9B6662bD5"]
+    p = ["0x0Ea288c16bd3A8265873C8D0754B9b2109b5B810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9",
+         "0xc084350789944A2A1af3c39b32937dcdd2AD2748", "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A",
+         "0x7129bED9a5264F0cF279110ECE27add9B6662bD5"]
     # 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE (17m), 0xDa007777D86AC6d989cC9f79A73261b3fC5e0DA0 (5.3k)
     for addr in p:
         addr = addr.lower()
@@ -215,6 +225,7 @@ def main():
 
     for i in res:
         print_info(f"{i} - {len(res[i])} incoming/outgoing txns")
+
 
 if __name__ == "__main__":
     main()
