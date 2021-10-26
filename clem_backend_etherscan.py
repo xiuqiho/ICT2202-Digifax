@@ -44,9 +44,11 @@ def print_info(message, tabs=0, symbol="*"):
     message = parse_message(message, tabs, symbol)
     console.print(message, style="bold white")
 
+
 def print_impt(message, tabs=0, symbol="!"):
     message = parse_message(message, tabs, symbol)
     console.print(message, style="bold red")
+
 
 def print_debug(message, tabs=0):
     message = parse_message(message, tabs, symbol="*")
@@ -91,8 +93,9 @@ class DigiFax_EthScan:
         for attrib in dir(self):
             if attrib and EXPORT_DATA_KEYWORD in attrib:
                 # Only in python > 3.5
-                all_data = {**{attrib : getattr(self, attrib)}, **all_data}
-                print_info(f"Merging attribute [bold yellow][{attrib}][/] ({sys.getsizeof(getattr(self, attrib))} bytes)")
+                all_data = {**{attrib: getattr(self, attrib)}, **all_data}
+                print_info(
+                    f"Merging attribute [bold yellow][{attrib}][/] ({sys.getsizeof(getattr(self, attrib))} bytes)")
 
         return all_data
 
@@ -261,16 +264,32 @@ class DigiFax_EthScan:
     def update_statistics(self):
         """This function will update self.ADDR_TXNS_STATS with unique incoming and outgoing txns for each addr"""
         # add uniq_incoming and uniq_outgoing to self.ADDR_TXNS_STATS[target_addr] using self.ADDR_TXNS_SUMMARISED
+        print()
+        print(SPACERS)
         for k, v in self.ADDR_TXNS_SUMMARISED.items():
-            for dict_elem in self.ADDR_TXNS_SUMMARISED[k]['outgoing']:
-                print(dict_elem)
+            print(k)
+            self.ADDR_TXNS_STATS[k]['incoming_uniq'] = []
+            self.ADDR_TXNS_STATS[k]['outgoing_uniq'] = []
+            # print(self.ADDR_TXNS_SUMMARISED[k].get('outgoing')[0].get('to'))
+
+            for dict_elem in self.ADDR_TXNS_SUMMARISED[k]['incoming']:
+                self.ADDR_TXNS_STATS[k]['incoming_uniq'].append(dict_elem.get('from'))
+            for dict_elem in self.ADDR_TXNS_SUMMARISED[k].get('outgoing'):
+                self.ADDR_TXNS_STATS[k]['outgoing_uniq'].append(dict_elem.get('to'))
+
+            self.ADDR_TXNS_STATS[k]['incoming_uniq'] = len(list(set(self.ADDR_TXNS_STATS[k].get('incoming_uniq'))))
+            self.ADDR_TXNS_STATS[k]['outgoing_uniq'] = len(list(set(self.ADDR_TXNS_STATS[k].get('outgoing_uniq'))))
+
+            print(self.ADDR_TXNS_STATS[k])
             print(SPACERS)
 
 
 def main():
     digi = DigiFax_EthScan()
 
-    p = ["0x0Ea288c16bd3A8265873C8D0754B9b2109b5B810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9", "0xc084350789944A2A1af3c39b32937dcdd2AD2748", "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A", "0x7129bED9a5264F0cF279110ECE27add9B6662bD5"]
+    p = ["0x0Ea288c16bd3A8265873C8D0754B9b2109b5B810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9",
+         "0xc084350789944A2A1af3c39b32937dcdd2AD2748", "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A",
+         "0x7129bED9a5264F0cF279110ECE27add9B6662bD5"]
     # 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE (17m), 0xDa007777D86AC6d989cC9f79A73261b3fC5e0DA0 (5.3k)
     for addr in p:
         addr = addr.lower()
@@ -295,15 +314,15 @@ def main():
 
     # pp.pprint(digi.ADDR_TXNS_SUMMARISED)
 
-    digi.export_data()
+    # digi.export_data()
 
     # pp.pprint(digi.ADDR_TXNS)
 
     # for i in digi.ADDR_TXNS:
     #     print_info(f"{i} - {len(digi.ADDR_TXNS[i])} incoming/outgoing txns")
 
-    for addr in res:
-        print_info(f"{addr} - {len(res[addr])} ")
+    # for addr in res:
+    #     print_info(f"{addr} - {len(res[addr])} ")
 
 
 if __name__ == "__main__":
