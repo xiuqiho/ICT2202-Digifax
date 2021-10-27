@@ -11,7 +11,7 @@ Aliases used:
 > WOI = Wallet of Interest
 """
 from PyQt5.QtWidgets import *                           # UI Elements library
-from PyQt5.QtGui import QFont, QPainter
+from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt, QDateTime
 from PyQt5.QtWebEngineWidgets import QWebEngineView     # Widget to display Pyvis HTML files
 from PyQt5 import uic                                   # Library to load
@@ -33,7 +33,7 @@ class NewCaseWindow(QMainWindow):
         self.homeparent = parent
 
         # Load the Home Window UI design from file
-        uic.loadUi("newcasewindow.ui", self)
+        uic.loadUi("./UI/newcasewindow.ui", self)
         self.setFixedSize(self.width(), self.height())
         self.editcasename.setFocus()
 
@@ -68,7 +68,7 @@ class HomeWindow(QMainWindow):
     def __init__(self, parent=None):
         super(HomeWindow, self).__init__(parent)
         # Load the Home Window UI design from file
-        uic.loadUi("home.ui", self)
+        uic.loadUi("./UI/home.ui", self)
         self.setFixedSize(self.width(), self.height())
 
         # Declaration of Child Windows
@@ -129,7 +129,7 @@ class Dashboard(QMainWindow):
         # Keep a local copy of the parent object
         self.homeparent = parent
         # Load the Home Window UI design from file
-        uic.loadUi("dashboard.ui", self)
+        uic.loadUi("./UI/dashboard.ui", self)
 
         # Get all wallet addresses from the case
         # <Format> [WOI_1, WOI_2, WOI_3, ...]

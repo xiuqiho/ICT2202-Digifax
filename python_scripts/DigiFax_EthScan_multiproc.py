@@ -9,7 +9,7 @@ from secrets import API_KEY
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen  # Python 3
 
-from multiprocessing import Pool, Process, Value, Array, Manager
+from multiprocessing import Process, Manager
 
 import sys
 import time

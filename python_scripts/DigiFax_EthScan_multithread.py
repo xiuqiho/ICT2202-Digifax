@@ -5,11 +5,11 @@ https://etherscan.io/txs?a=0xddbd2b932c763ba5b1b7ae3b362eac3e8d40121a
 """
 
 from etherscan import Etherscan
-from secrets import API_KEY
+from python_scripts.secrets import API_KEY
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen  # Python 3
 
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import sys
 import time
 import pprint
