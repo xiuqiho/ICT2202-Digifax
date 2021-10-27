@@ -207,19 +207,6 @@ class DigiFax_EthScan:
                     res.append(dict_indiv_txn.copy())
                     progress.update(task_id, advance=1)
 
-                ## BUGGY COS OF THE BOTH_FLAG
-                # if direction == OUTGOING_FLAG or direction == BOTH_FLAG:
-                #     if txn['from'] == target_addr:
-                #         dict_indiv_txn.update({"direction": OUTGOING_FLAG})
-                #         res.append(dict_indiv_txn.copy())
-                #         progress.update(task_id, advance=1)
-                # if direction == INCOMING_FLAG or direction == BOTH_FLAG:
-                #     if txn['to'] == target_addr:
-                #         dict_indiv_txn.update({"direction": INCOMING_FLAG})
-                #         res.append(dict_indiv_txn.copy())
-                #         progress.update(task_id, advance=1)
-                ## /BUGGY COS OF THE BOTH_FLAG
-
             if len(res) == expected_txn:
                 break
 
@@ -283,6 +270,26 @@ class DigiFax_EthScan:
             print(self.ADDR_TXNS_STATS[k])
             print(SPACERS)
 
+    def get_txns_over_limit(self, target_addr):
+        page = 1
+        offset = 1000
+        while 1:
+            print_info("Getting txns")
+            list_full_txns = self.EtherScanObj.get_normal_txs_by_address_paginated(target_addr, page, offset, 0, 99999999, 'desc')
+            print_info(f"{len(list_full_txns)}, {list_full_txns[0]}")
+            page+=1
+
+# https://api.etherscan.io/api
+#    ?module=account
+#    &action=txlist
+#    &address=0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE
+#    &startblock=0
+#    &endblock=99999999
+#    &page=1
+#    &offset=10000
+#    &sort=asc
+#    &apikey=1XCMJP7VNAXU1NVSKS4C7XBM1ET77SYNVE
+
 
 def main():
     digi = DigiFax_EthScan()
@@ -290,7 +297,8 @@ def main():
     p = ["0x0Ea288c16bd3A8265873C8D0754B9b2109b5B810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9",
          "0xc084350789944A2A1af3c39b32937dcdd2AD2748", "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A",
          "0x7129bED9a5264F0cF279110ECE27add9B6662bD5"]
-    # 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE (17m), 0xDa007777D86AC6d989cC9f79A73261b3fC5e0DA0 (5.3k)
+    #  (17m), 0xDa007777D86AC6d989cC9f79A73261b3fC5e0DA0 (5.3k)
+    p = ["0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE"]
     for addr in p:
         addr = addr.lower()
 
@@ -305,12 +313,14 @@ def main():
         # print_info(f'Contract Creation: {contract_creation}', 1)
         # print_info(f'Labels: {digi.get_addr_labels(addr)}')
 
-    res = digi.get_ext_txns(p)  # can use outgoing or incoming
+    digi.get_txns_over_limit("0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE")
+
+    # res = digi.get_ext_txns(p)  # can use outgoing or incoming
 
     # pp.pprint("")
-
-    digi.split_txns_based_on_direction(res)
-    digi.update_statistics()
+    #
+    # digi.split_txns_based_on_direction(res)
+    # digi.update_statistics()
 
     # pp.pprint(digi.ADDR_TXNS_SUMMARISED)
 
