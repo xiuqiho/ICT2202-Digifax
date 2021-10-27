@@ -24,7 +24,7 @@ from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn, 
 
 progress = Progress(TextColumn("[bold blue]{task.fields[filename]}", justify="right"), BarColumn(bar_width=None),
                     "[progress.percentage]{task.percentage:>3.1f}%", "•", TimeRemainingColumn(), FileSizeColumn(),
-                    TotalFileSizeColumn())
+                    TotalFileSizeColumn(), transient=True)
 
 
 def print_divider(message):
@@ -167,7 +167,16 @@ class DigiFax_EthScan:
         return [len_all_txn, len_incoming_txn, len_outgoing_txn, len_contract_creation_txn]
 
     def get_addr_txns(self, task_id, target_addr, direction=OUTGOING_FLAG) -> dict:
-        list_full_txns = self.EtherScanObj.get_normal_txs_by_address(target_addr, 0, 99999999, 'desc')
+        # Set flag to 0
+        asserterror_flag = 0
+
+        while not asserterror_flag:
+            try:
+                list_full_txns = self.EtherScanObj.get_normal_txs_by_address(target_addr, 0, 9999999999, 'age')
+                # only when there are no errors, and transactions are successfully obtained, will the program proceed
+                asserterror_flag = 1
+            except AssertionError:
+                time.sleep(1)
 
         dict_indiv_txn = {}
         res = []
@@ -246,8 +255,6 @@ class DigiFax_EthScan:
                 if indiv_txn['direction'] == INCOMING_FLAG:
                     self.ADDR_TXNS_SUMMARISED[k]['incoming'].append(indiv_txn)
 
-        # print(f'{SPACERS}')
-
     def update_statistics(self):
         """This function will update self.ADDR_TXNS_STATS with unique incoming and outgoing txns for each addr"""
         # add uniq_incoming and uniq_outgoing to self.ADDR_TXNS_STATS[target_addr] using self.ADDR_TXNS_SUMMARISED
@@ -270,36 +277,18 @@ class DigiFax_EthScan:
             print(self.ADDR_TXNS_STATS[k])
             print(SPACERS)
 
-    def get_txns_over_limit(self, target_addr):
-        page = 1
-        offset = 1000
-        while 1:
-            print_info("Getting txns")
-            list_full_txns = self.EtherScanObj.get_normal_txs_by_address_paginated(target_addr, page, offset, 0, 99999999, 'desc')
-            print_info(f"{len(list_full_txns)}, {list_full_txns[0]}")
-            page+=1
-
-# https://api.etherscan.io/api
-#    ?module=account
-#    &action=txlist
-#    &address=0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE
-#    &startblock=0
-#    &endblock=99999999
-#    &page=1
-#    &offset=10000
-#    &sort=asc
-#    &apikey=1XCMJP7VNAXU1NVSKS4C7XBM1ET77SYNVE
-
-
 def main():
+
+    start = time.time()
+
     digi = DigiFax_EthScan()
 
-    p = ["0x0Ea288c16bd3A8265873C8D0754B9b2109b5B810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9",
+    input_addr = ["0x0Ea288c16bd3A8265873C8D0754B9b2109b5B810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9",
          "0xc084350789944A2A1af3c39b32937dcdd2AD2748", "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A",
-         "0x7129bED9a5264F0cF279110ECE27add9B6662bD5"]
-    #  (17m), 0xDa007777D86AC6d989cC9f79A73261b3fC5e0DA0 (5.3k)
-    p = ["0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE"]
-    for addr in p:
+         "0x7129bED9a5264F0cF279110ECE27add9B6662bD5", "0x81818e94F63c6F31569dc69D26CC79558BFbfda8",
+         "0x45fE3b59c201145B8E3BAD7661950DD3129be821"]
+
+    for addr in input_addr:
         addr = addr.lower()
 
         # print_divider(f"{addr}")
@@ -313,27 +302,15 @@ def main():
         # print_info(f'Contract Creation: {contract_creation}', 1)
         # print_info(f'Labels: {digi.get_addr_labels(addr)}')
 
-    digi.get_txns_over_limit("0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE")
+    res = digi.get_ext_txns(input_addr)  # can use outgoing or incoming
 
-    # res = digi.get_ext_txns(p)  # can use outgoing or incoming
-
-    # pp.pprint("")
-    #
-    # digi.split_txns_based_on_direction(res)
-    # digi.update_statistics()
+    digi.split_txns_based_on_direction(res)
+    digi.update_statistics()
 
     # pp.pprint(digi.ADDR_TXNS_SUMMARISED)
-
-    # digi.export_data()
-
     # pp.pprint(digi.ADDR_TXNS)
 
-    # for i in digi.ADDR_TXNS:
-    #     print_info(f"{i} - {len(digi.ADDR_TXNS[i])} incoming/outgoing txns")
-
-    # for addr in res:
-    #     print_info(f"{addr} - {len(res[addr])} ")
-
+    print_debug(f"{time.time() - start}s")
 
 if __name__ == "__main__":
     main()
