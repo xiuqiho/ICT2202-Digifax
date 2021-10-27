@@ -21,8 +21,10 @@ from rich.console import Console
 
 console = Console()
 
+
 def print_divider(message):
     console.rule(f"[bold red][*][/] {message}", style="bold red", align="left")
+
 
 def parse_message(message, tabs=0, symbol=None, symbol_style=None):
     message = str(message)
@@ -163,9 +165,11 @@ class DigiFax_EthScan:
             except AssertionError:
                 time.sleep(1)
 
-        len_all_txn, len_incoming_txn, len_outgoing_txn, len_contract_creation_txn = self.get_addr_stats(target_addr, list_full_txns)
+        len_all_txn, len_incoming_txn, len_outgoing_txn, len_contract_creation_txn = self.get_addr_stats(target_addr,
+                                                                                                         list_full_txns)
 
-        return_stat[target_addr] = {"all_txn": len_all_txn, "incoming_txn": len_incoming_txn, "outgoing_txn": len_outgoing_txn, "contract_txn": len_contract_creation_txn}
+        return_stat[target_addr] = {"all_txn": len_all_txn, "incoming_txn": len_incoming_txn,
+                                    "outgoing_txn": len_outgoing_txn, "contract_txn": len_contract_creation_txn}
 
         if direction == BOTH_FLAG:
             expected_txn = len_all_txn - len_contract_creation_txn
@@ -193,10 +197,10 @@ class DigiFax_EthScan:
         for txn in list_full_txns:
             if len(txn['to']) > 1:
                 from_labels = self.get_addr_labels(txn["from"])
-                return_label.update({txn["from"] : from_labels})
+                return_label.update({txn["from"]: from_labels})
 
                 to_labels = self.get_addr_labels(txn["from"])
-                return_label.update({txn["to"] : to_labels})
+                return_label.update({txn["to"]: to_labels})
 
                 dict_indiv_txn = {
                     'timestamp': txn['timeStamp'],
@@ -220,7 +224,6 @@ class DigiFax_EthScan:
 
         return_txn[target_addr] = res
 
-
     def get_ext_txns(self, list_of_addr, direction=OUTGOING_FLAG) -> dict:
         """This function allow you to list all the incoming or outgoing txns of a wallet address
         Information extracted: timeStamp, blockNumber, hash, labels, from, to, value"""
@@ -236,7 +239,8 @@ class DigiFax_EthScan:
         return_stat = manager.dict()
 
         for addr in list_of_addr:
-            p = Process(target=self.get_addr_txns, args=(addr.lower(), return_txn, return_label, return_stat, direction))
+            p = Process(target=self.get_addr_txns,
+                        args=(addr.lower(), return_txn, return_label, return_stat, direction))
             p.start()
             process_list.append(p)
 
@@ -286,6 +290,10 @@ class DigiFax_EthScan:
             self.ADDR_TXNS_STATS[k]['incoming_uniq'] = len(list(set(self.ADDR_TXNS_STATS[k].get('incoming_uniq'))))
             self.ADDR_TXNS_STATS[k]['outgoing_uniq'] = len(list(set(self.ADDR_TXNS_STATS[k].get('outgoing_uniq'))))
 
+            # if u wanna see the unique addresses
+            # self.ADDR_TXNS_STATS[k]['incoming_uniq'] = list(set(self.ADDR_TXNS_STATS[k].get('incoming_uniq')))
+            # self.ADDR_TXNS_STATS[k]['outgoing_uniq'] = list(set(self.ADDR_TXNS_STATS[k].get('outgoing_uniq')))
+
             print(self.ADDR_TXNS_STATS[k])
             print(SPACERS)
 
@@ -294,9 +302,9 @@ def main():
     digi = DigiFax_EthScan()
 
     input_addr = ["0x0Ea288c16bd3A8265873C8D0754B9b2109b5B810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9",
-                "0xc084350789944A2A1af3c39b32937dcdd2AD2748", "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A",
-                "0x7129bED9a5264F0cF279110ECE27add9B6662bD5", "0x81818e94F63c6F31569dc69D26CC79558BFbfda8",
-                "0x45fE3b59c201145B8E3BAD7661950DD3129be821"]
+                  "0xc084350789944A2A1af3c39b32937dcdd2AD2748", "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A",
+                  "0x7129bED9a5264F0cF279110ECE27add9B6662bD5", "0x81818e94F63c6F31569dc69D26CC79558BFbfda8",
+                  "0x45fE3b59c201145B8E3BAD7661950DD3129be821"]
 
     # huge_txns : 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE, 0xDa007777D86AC6d989cC9f79A73261b3fC5e0DA0
 
@@ -318,14 +326,15 @@ def main():
 
     # pp.pprint("")
     #
-    # digi.split_txns_based_on_direction(res)
-    # digi.update_statistics()
+    digi.split_txns_based_on_direction(res)
+    digi.update_statistics()
 
     # pp.pprint(digi.ADDR_TXNS_SUMMARISED)
 
     # digi.export_data()
 
     # pp.pprint(digi.ADDR_TXNS)
+
 
 if __name__ == "__main__":
     main()
