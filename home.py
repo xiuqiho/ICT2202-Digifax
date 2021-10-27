@@ -338,7 +338,7 @@ class Dashboard(QMainWindow):
                 self.graph.add_edge(focus, relative[ADDR], value=relative[WEIGHT])
 
         # Save the graph into a file
-        self.graph.show("graph.html")
+        self.graph.save_graph("graph.html")
         self.loadPage('graph.html')
 
     def addNode(self, woi):
@@ -362,7 +362,7 @@ class Dashboard(QMainWindow):
         self.addNode(woi)
 
         # Reload the graph
-        self.graph.show("graph.html")
+        self.graph.save_graph("graph.html")
         self.loadPage('graph.html')
 
     def dropNode(self, woi):
@@ -396,7 +396,7 @@ class Dashboard(QMainWindow):
         self.dropNode(woi)
 
         # Reload the graph
-        self.graph.show("graph.html")
+        self.graph.save_graph("graph.html")
         self.loadPage('graph.html')
 
     def addRelationship(self):
@@ -419,7 +419,7 @@ class Dashboard(QMainWindow):
                 self.graph.add_edge(focusedWallet, woi, value=DEFAULT_WEIGHT)   # Change DEFAULT_WEIGHT to # of transactions
 
                 # Reload the graph
-                self.graph.show("graph.html")
+                self.graph.save_graph("graph.html")
                 self.loadPage('graph.html')
         except AttributeError as err:
             # Add notification to user telling them to select a WOI (node)
@@ -444,7 +444,7 @@ class Dashboard(QMainWindow):
                     print(f"[!] Couldn't delete RS from '{focusedWallet}' to '{woi}'")
                     pass
                 # Reload the graph
-                self.graph.show("graph.html")
+                self.graph.save_graph("graph.html")
                 self.loadPage('graph.html')
         except AttributeError as err:
             # Add notification to user telling them to select a WOI (node)
