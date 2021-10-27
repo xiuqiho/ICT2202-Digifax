@@ -280,6 +280,8 @@ class DigiFax_EthScan:
             print(k)
             self.ADDR_TXNS_STATS[k]['incoming_uniq'] = []
             self.ADDR_TXNS_STATS[k]['outgoing_uniq'] = []
+            self.ADDR_TXNS_STATS[k]['incoming_uniq_data'] = []
+            self.ADDR_TXNS_STATS[k]['outgoing_uniq_data'] = []
             # print(self.ADDR_TXNS_SUMMARISED[k].get('outgoing')[0].get('to'))
 
             for dict_elem in self.ADDR_TXNS_SUMMARISED[k]['incoming']:
@@ -288,7 +290,10 @@ class DigiFax_EthScan:
                 self.ADDR_TXNS_STATS[k]['outgoing_uniq'].append(dict_elem.get('to'))
 
             self.ADDR_TXNS_STATS[k]['incoming_uniq'] = len(list(set(self.ADDR_TXNS_STATS[k].get('incoming_uniq'))))
+            self.ADDR_TXNS_STATS[k]['incoming_uniq_data'] = 1
+
             self.ADDR_TXNS_STATS[k]['outgoing_uniq'] = len(list(set(self.ADDR_TXNS_STATS[k].get('outgoing_uniq'))))
+            self.ADDR_TXNS_STATS[k]['outgoing_uniq_data'] = 1
 
             # if u wanna see the unique addresses
             # self.ADDR_TXNS_STATS[k]['incoming_uniq'] = list(set(self.ADDR_TXNS_STATS[k].get('incoming_uniq')))

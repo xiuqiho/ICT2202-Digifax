@@ -4,3 +4,4 @@ venv
 .DS_STORE
 *.pyc
 secrets.py
+graph.html
