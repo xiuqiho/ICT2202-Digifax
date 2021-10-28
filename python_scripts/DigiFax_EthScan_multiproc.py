@@ -310,10 +310,12 @@ class DigiFax_EthScan:
 def main():
     digi = DigiFax_EthScan()
 
-    input_addr = ["0x0Ea288c16bd3A8265873C8D0754B9b2109b5B810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9",
-                  "0xc084350789944A2A1af3c39b32937dcdd2AD2748", "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A",
-                  "0x7129bED9a5264F0cF279110ECE27add9B6662bD5", "0x81818e94F63c6F31569dc69D26CC79558BFbfda8",
-                  "0x45fE3b59c201145B8E3BAD7661950DD3129be821"]
+    # input_addr = ["0x0Ea288c16bd3A8265873C8D0754B9b2109b5B810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9",
+    #               "0xc084350789944A2A1af3c39b32937dcdd2AD2748", "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A",
+    #               "0x7129bED9a5264F0cF279110ECE27add9B6662bD5", "0x81818e94F63c6F31569dc69D26CC79558BFbfda8",
+    #               "0x45fE3b59c201145B8E3BAD7661950DD3129be821"]
+    input_addr = ['0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9', '0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A',
+                  '0x7129bED9a5264F0cF279110ECE27add9B6662bD5']
 
     # huge_txns : 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE, 0xDa007777D86AC6d989cC9f79A73261b3fC5e0DA0
 
@@ -338,8 +340,8 @@ def main():
     digi.split_txns_based_on_direction(res)
     digi.update_statistics()
 
-    # pp.pprint(digi.ADDR_TXNS_SUMMARISED)
-    pp.pprint(digi.ADDR_TXNS_STATS)
+    pp.pprint(digi.ADDR_TXNS_SUMMARISED)
+    # pp.pprint(digi.ADDR_TXNS_STATS)
 
     # digi.export_data()
 
