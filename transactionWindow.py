@@ -113,8 +113,9 @@ class TransactionWindow(QMainWindow):
         # Load the Home Window UI design from file
         uic.loadUi("./UI/transactions.ui", self)
 
-        # self.tableWidget.setColumnWidth(0,1000)
+        self.tableWidget.setEditTriggers(QTableWidget.NoEditTriggers)
 
+        self.setFixedSize(self.width(), self.height())
         self.loadData(data)
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.resizeRowsToContents()
