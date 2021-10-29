@@ -14,7 +14,20 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTableView" name="transactionsTable">
+    <widget class="QPushButton" name="websiteButton">
+     <property name="geometry">
+      <rect>
+       <x>650</x>
+       <y>570</y>
+       <width>125</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Visit Website</string>
+     </property>
+    </widget>
+   <widget class="QTableWidget" name="tableWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -23,42 +36,54 @@
       <height>551</height>
      </rect>
     </property>
-    <property name="autoFillBackground">
-     <bool>true</bool>
-    </property>
-    <property name="showGrid">
-     <bool>true</bool>
-    </property>
-    <property name="sortingEnabled">
-     <bool>false</bool>
-    </property>
+    <column>
+     <property name="text">
+      <string>Date</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>From</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>From_Labels</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>To</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>To_Labels</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Direction</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Value</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Blocknumber</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Hash</string>
+     </property>
+    </column>
    </widget>
-   <widget class="QPushButton" name="websiteButton">
-    <property name="geometry">
-     <rect>
-      <x>650</x>
-      <y>570</y>
-      <width>125</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Visit Website</string>
-    </property>
-   </widget>
-   <widget class="QScrollBar" name="verticalScrollBar">
-    <property name="geometry">
-     <rect>
-      <x>775</x>
-      <y>10</y>
-      <width>16</width>
-      <height>551</height>
-     </rect>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Vertical</enum>
-    </property>
-   </widget>
+   <zorder>websiteButton</zorder>
+   <zorder>tableWidget</zorder>
   </widget>
  </widget>
  <resources/>
