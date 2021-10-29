@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem
 from PyQt5 import uic
 import time
 import datetime
@@ -120,6 +120,7 @@ class TransactionWindow(QMainWindow):
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.resizeRowsToContents()
         self.tableWidget.setSortingEnabled(True)
+        self.setFixedSize(self.width(), self.height())
 
         self.websiteButton.clicked.connect(self.openSite)
 
@@ -143,8 +144,8 @@ class TransactionWindow(QMainWindow):
         from_label_column = 2
         to_column = 3
         to_label_column = 4
-        direction_column = 5
-        value_column = 6
+        value_column = 5
+        direction_column = 6
         blocknumber_column = 7
         txn_hash_column = 8
 
@@ -153,7 +154,6 @@ class TransactionWindow(QMainWindow):
         to_label_str = ""
 
         for row, x in enumerate(data):
-
             # Set local timezone for date column
             self.tableWidget.setHorizontalHeaderLabels([f"Datetime (YYYY/MM/DD)"])
 
@@ -170,7 +170,8 @@ class TransactionWindow(QMainWindow):
                     from_label_str = ",".join(x["from_labels"])
                     self.tableWidget.setItem(row, from_label_column, QTableWidgetItem(from_label_str))
                 else:
-                    self.tableWidget.setItem(row, to_label_column, QTableWidgetItem(x["from_labels"]))
+                    # print(f"<{type(x['from_labels'])}> {x['from_labels']}")
+                    self.tableWidget.setItem(row, from_label_column, QTableWidgetItem(x["from_labels"][0]))
             else:
                 self.tableWidget.setItem(row, from_label_column, QTableWidgetItem("None"))
 
@@ -183,18 +184,18 @@ class TransactionWindow(QMainWindow):
                     to_label_str = ",".join(x["to_labels"])
                     self.tableWidget.setItem(row, to_label_column, QTableWidgetItem(to_label_str))
                 else:
-                    self.tableWidget.setItem(row, to_label_column, QTableWidgetItem(x["to_labels"]))
+                    self.tableWidget.setItem(row, to_label_column, QTableWidgetItem(x["to_labels"][0]))
             else:
                 self.tableWidget.setItem(row, to_label_column, QTableWidgetItem("None"))
+
+            # Set data for column -> value
+            self.tableWidget.setItem(row, value_column, QTableWidgetItem(str(x["value"])))
 
             # Set data for column -> direction
             if x["direction"] == 0:
                 self.tableWidget.setItem(row, direction_column, QTableWidgetItem("Incoming"))
             else:
                 self.tableWidget.setItem(row, direction_column, QTableWidgetItem("Outgoing"))
-
-            # Set data for column -> value
-            self.tableWidget.setItem(row, value_column, QTableWidgetItem(str(x["value"])))
 
             # Set data for column -> blockNumber
             self.tableWidget.setItem(row, blocknumber_column, QTableWidgetItem(x["blockNumber"]))

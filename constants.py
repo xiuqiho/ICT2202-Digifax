@@ -7,6 +7,31 @@ Last Updated:   25th Oct 2021
 Description:
 > Constants used in the ICT2202 Team Assignment "Digifax" project
 """
+# Data Structure Constants
+SANITIZED_DATA = "sanitized"
+STATS = "stats"
+TIMESTAMP = "timestamp"
+
+INBOUND = "incoming"
+OUTBOUND = "outgoing"
+ALL = "all"
+
+IN = 0
+OUT = 1
+
+TOTAL_TXNS = "all_txn"
+UNIQ_IN = "incoming_uniq_data"
+UNIQ_OUT = "outgoing_uniq_data"
+FROM = "from"
+TO = "to"
+
+# Case Data Structure template
+TEMPLATE = {"casename": str(), "casedescription": str(), "walletaddresses": list(), "walletrelationships": dict(), "data": {SANITIZED_DATA: dict(), STATS: dict()}, "aliases": dict(), "description": dict(), "filename": dict()}
+CASE_FILE_EXT = ".json"
+
+# Node Profile Window Dimensions
+NPW_WIDTH = 500
+NPW_HEIGHT = 300
 
 # Dashboard - Screen (app) ratios
 SCREEN_WIDTH = 0.95
@@ -23,13 +48,13 @@ FLABEL_Y_OFFSET = 0.011
 
 # Dashboard - "Filter" LineEdit ratios
 FEDIT_HEIGHT = 0.02
-FEDIT_WIDTH = 0.19
+FEDIT_WIDTH = 0.175
 FEDIT_Y_OFFSET = 0.013
 
-# Dashboard - "View Transactions" PushButton ratios
-VTBTN_HEIGHT = 0.025
-VTBTN_WIDTH = 0.085
-VTBTN_Y_OFFSET = 0.0092
+# Dashboard - "Add Node" PushButton ratios
+ANBTN_HEIGHT = 0.025
+ANBTN_WIDTH = 0.07
+ANBTN_Y_OFFSET = 0.0092
 
 # Dashboard - "Node" List ratios
 NLIST_HEIGHT = 0.2
@@ -96,11 +121,16 @@ RS_BTN_Y_OFFSET = 0.96
 # Relationship data structure
 ADDR = 0
 WEIGHT = 1
+# Relationship weight thresholds
+LOWER_BOUND = 5
+MIDDLE_BOUND = 100
+# Relationship weights
+LOW_WEIGHT = 1
+MEDIUM_WEIGHT = 2
+HIGH_WEIGHT = 3
+
 
 # PyVis Graph Node Defaults
 DEFAULT_COLORS = ['#3da831', '#9a31a8', '#3155a8', '#eb4034']
 DEFAULT_WEIGHT = 2
 ADDR_DISPLAY_LIMIT = 10
-
-# Data Structure Constants
-INBOUND = 0

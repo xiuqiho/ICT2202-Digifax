@@ -3,9 +3,10 @@ References:
 https://github.com/pcko1/etherscan-python
 https://etherscan.io/txs?a=0xddbd2b932c763ba5b1b7ae3b362eac3e8d40121a
 """
+import json
 
 from etherscan import Etherscan
-from secrets import API_KEY
+# from secrets import API_KEY
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen  # Python 3
 
@@ -21,6 +22,7 @@ from rich.console import Console
 
 console = Console()
 
+API_KEY = "1XCMJP7VNAXU1NVSKS4C7XBM1ET77SYNVE"
 
 def print_divider(message):
     console.rule(f"[bold red][*][/] {message}", style="bold red", align="left")
@@ -306,6 +308,14 @@ class DigiFax_EthScan:
             # print(self.ADDR_TXNS_STATS[k])
             print(SPACERS)
 
+    def export_as_json(self, save_path):
+        """
+        Function to dump 'self.ADDR_TXNS_SUMMARISED' into a .json file
+        :return: None
+        """
+        with open(save_path, 'w') as f:
+            json.dump({"sanitized": self.ADDR_TXNS_SUMMARISED, "stats": self.ADDR_TXNS_STATS}, f)
+
 
 def main():
     digi = DigiFax_EthScan()
@@ -341,6 +351,8 @@ def main():
     digi.update_statistics()
 
     pp.pprint(digi.ADDR_TXNS_SUMMARISED)
+    # digi.export_as_json("../data.json")                   # function added by xiuqi: to export summarised data into .json file
+
     # pp.pprint(digi.ADDR_TXNS_STATS)
 
     # digi.export_data()

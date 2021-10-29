@@ -5,7 +5,7 @@ Date Completed: 25th Oct 2021
 Last Updated:   25th Oct 2021
 
 Description:
-> GUI code for the ICT2202 Team Assignment "Digifax"
+> GUI code for the ICT2202 Team Assignment "Digifax" Home & Dashboard page
 
 Aliases used:
 > WOI = Wallet of Interest
@@ -15,12 +15,17 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt, QDateTime
 from PyQt5.QtWebEngineWidgets import QWebEngineView     # Widget to display Pyvis HTML files
 from PyQt5 import uic                                   # Library to load
-
 from pyvis.network import Network                       # Core library for producing the transaction network graphs
 
 from constants import *                                 # All constants used in the project
+from transactionWindow import TransactionWindow
+from nodeProfileWindow import NodeProfileWindow
+from python_scripts.DigiFax_EthScan_multiproc import DigiFax_EthScan
+
 import random                                           # To randomly choose a node color
+from pyperclip import copy                              # For putting text into user's clipboard
 import re                                               # For Text Search filtering
+import json                                             # For opening / writing case files in .json format
 
 
 class NewCaseWindow(QMainWindow):
@@ -48,16 +53,25 @@ class NewCaseWindow(QMainWindow):
         """
         # Capture the input fields into a dictionary
         info = {"casename": self.editcasename.text(), "casedescription": self.editcasedescription.toPlainText(),
-                "walletaddresses": self.editwalletaddresses.toPlainText()}
+                "walletaddresses": [addr.lower() for addr in set(self.editwalletaddresses.toPlainText().split('\n'))]}
 
-        # Define and call function that will @gerald @clement
-        # 1) Ensure no empty input
-        # 2) Sanitize wallet addresses where necessary
-        # 3) Split Wallet Addresses string into a list
+        # Check if supplied wallet addresses are all valid
+        for addr in info["walletaddresses"]:
+            if not self.homeparent.isValidWalletAddress(addr) and addr != "":
+                self.homeparent.displayMessage(f"[-] Unaccepted wallet address format:\n{addr}")
+                return
+
+        # Check if fields are empty (description and casename are not compulsory)
+        if len(info["casename"]) <= 0 or not info["casename"].isalnum():
+            self.homeparent.displayMessage(f"[-] Please enter a valid case name")
+            return
+
+        # Set the walletaddresses list
+        info["walletaddresses"] = list(set(info["walletaddresses"]))
 
         # Save the data in the parent HomeWindow's context
         self.homeparent.setNewCaseInfo(info)
-        # self.hide()
+        self.hide()
         self.deleteLater()
 
 
@@ -73,21 +87,18 @@ class HomeWindow(QMainWindow):
 
         # Declaration of Child Windows
         self.newcasewindow = None
+        self.db = None
+        self.nodeprofilewindow = None
+        self.txnwindow = None
 
         # Variables used by child windows
         self.caseinfo = dict()
-        self.caseinfo = {"casename": "Case Study on Gerald", "casedescription": "It has been suspected that gerald is a faggot and a slippery haxer who doesn't get caught...",
-                "walletaddresses": ["0x0ea288c16bd3a8265873c8d0754b9b2109b5b810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9", "0xDa007777D86AC6d989cC9f79A73261b3fC5e0DA0", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9", "0xbdb5829f5452Bd10bb569B5B9B54733001ab5ab9", "0xbdb5829f5452Bd10bb569B5B4B54732001ab5ab9", "0xbdb5829f5452B510bb569B5B9B54732001ab5ab9", "0xbdb5829f5452Bd10bb569B5B6B54732001ab5ab9", "0xbdb5829f5752Bd10bb569B5B9B54732001ab5ab9", "0xbdb5829f5452Bd10bb569B5B9B547320018b5ab9", "0xbdb5829f5452Bd10bb569B599B54732001ab5ab9", "0xbdb5829f5452Bd10bb569B509B54732001ab5ab9", "0xbdb5829f5452Bd10bb569B5A9B54732001ab5ab9", "0xbdb5829f5452Bd10bb569B5B9B547320B1ab5ab9", "0xbdb5829f5452Bd10bbC69B5B9B54732001ab5ab9", "0xbdb5829f5452Bd10bb56DB5B9B54732001ab5ab9"],
-                         "walletrelationships": {"0x0ea288c16bd3a8265873c8d0754b9b2109b5b810":[["0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9", 2]],
-                                                 "0xDa007777D86AC6d989cC9f79A73261b3fC5e0DA0": [["0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9", 2]]}}
+        # Decalre filename where any active case will be saved into
+        self.casefile = str()
 
         # Connect buttons to on-click events
         self.newcasebtn.clicked.connect(self.openNewCaseWindow)
         self.opencasebtn.clicked.connect(self.openExistingCaseWindow)
-
-        self.hide()
-        self.db = Dashboard(self)
-        self.db.show()
 
     def setNewCaseInfo(self, info):
         """
@@ -95,8 +106,16 @@ class HomeWindow(QMainWindow):
         :param info: Dictionary containing user input for case name, description, and wallet addresses
         :return: None
         """
-        self.caseinfo = info
-        print(self.caseinfo)
+        # Create New Case data structure based on template from constants.py
+        self.caseinfo = TEMPLATE
+        self.caseinfo["casename"] = info["casename"]
+        self.caseinfo["casedescription"] = info["casedescription"]
+        self.caseinfo["walletaddresses"] = info["walletaddresses"]
+        self.caseinfo["filename"] = info["casename"] + CASE_FILE_EXT
+        self.casefile = self.caseinfo["filename"]
+
+        # Open the dashboard
+        self.openDashboard()
 
     def openNewCaseWindow(self):
         """
@@ -114,10 +133,120 @@ class HomeWindow(QMainWindow):
         """
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open a Existing Case File (.json)", "",
                                                       "JSON Files (*.json);;All Files (*)", options=options)
         if fileName:
+            # Try to load the file contents into 'self.caseinfo'
             print(f"[*] Opening file: {fileName}")
+            with open(fileName, 'r') as f:
+                data = json.load(f)
+                # If keys do not match, reject the opening of the given file
+                if data.keys() != TEMPLATE.keys():
+                    self.displayMessage("[-] Unrecognized case file: Inconsistent data keys")
+                    return
+                elif len(data["casename"]) <= 0:
+                    self.displayMessage("[-] Unrecognized case file: No case name in given file")
+                    return
+
+                # If all goes well, use the read data as the case data in 'self.caseinfo' and open the dashboard
+                self.caseinfo = data
+                self.casefile = data["filename"]
+                self.openDashboard()
+
+    def openDashboard(self):
+        """
+        Function to create dashboard instance and show it
+        :return: None
+        """
+        # Display the dashboard and hide current window (Home window)
+        self.db = Dashboard(self)
+        self.db.show()
+
+    def openNodeProfileWindow(self, focusnode):
+        """
+        Function to spawn/display a child window for inputting new case information
+        :return: None
+        """
+        # Instantiate woi profile window and show it immediateley
+        self.nodeprofilewindow = NodeProfileWindow(focusnode, self)
+        self.nodeprofilewindow.show()
+
+    def signalProfileUpdated(self):
+        """
+        Function to bind a specified alias to a node (WOI) address in the caseinfo["aliases"] dictionary
+        :return: None
+        """
+        self.db.populateWoiList()
+        self.db.populateGraph()
+
+    def openTransactionWindow(self, data):
+        """
+        Function for displaying given transactions
+        :param data: dataset received from Dashboard containing specific transactions
+        :return: None
+        """
+        self.txnwindow = TransactionWindow(data)
+        self.txnwindow.show()
+
+    def isValidWalletAddress(self, addr):
+        """
+        Function that checks if a given string is a valid wallet address
+        :param addr: String representation of a wallet address
+        :return: True if valid wallet address, else False
+        """
+        if len(addr) == 42:
+            if addr[0] == '0' and addr[1] == 'x' and addr[2:].isalnum():
+                return True
+        return False
+
+    def saveFile(self, wois, wrs):
+        """
+        Function to save current work progress into file path specified at 'self.casefile'
+        :param wois: latest List of wallets of interests
+        :param wrs: latest Dictionary of all relationships
+        :return: None
+        """
+        # Update wallet addresses, relationships inside 'self.caseinfo'
+        self.caseinfo["walletaddresses"] = wois
+        self.caseinfo["walletrelationships"] = wrs
+
+        print(f"[*] Saving to {self.casefile}")
+        # Directly save into 'self.casefile'
+        with open(self.casefile, 'w') as f:
+            json.dump(self.caseinfo, f)
+
+    def saveFileAs(self, wois, wrs):
+        """
+        Function to save current work progress in a file path chosen by user from file dialog
+        :param wois: latest List of wallets of interests
+        :param wrs: latest Dictionary of all relationships
+        :return: None
+        """
+        # Open file dialog for user to choose path to file for saving
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(self, "Save Case File", "",
+                                                  "JSON Files (*.json)", options=options)
+
+        if fileName:
+            # Update 'self.casefile' to new filename
+            self.casefile = fileName + CASE_FILE_EXT
+            # Update the data structure's filename entry
+            self.caseinfo["filename"] = fileName + CASE_FILE_EXT
+
+            # Save the file
+            self.saveFile(wois, wrs)
+            print(f"[*] Completed saving to {self.casefile}")
+
+    def displayMessage(self, message):
+        """
+        Function to display message box with arbitrary error message
+        :param msg: String representation of desired error message to display to user
+        :return: None
+        """
+        msg = QMessageBox()
+        msg.setText(message)
+        msg.exec_()
 
 
 class Dashboard(QMainWindow):
@@ -126,6 +255,7 @@ class Dashboard(QMainWindow):
     """
     def __init__(self, parent=None):
         super(Dashboard, self).__init__(parent)
+        self.loaded = 0
         # Keep a local copy of the parent object
         self.homeparent = parent
         # Load the Home Window UI design from file
@@ -155,21 +285,24 @@ class Dashboard(QMainWindow):
 
         # Call function to plot the PyVis graph
         self.graph = None
-        self.createGraph()
         self.populateGraph()
         # self.graph.show_buttons(filter_=True)
 
+        # Initialize default values for dashboard
+        self.initDashboardDefaultValues()
+
         # Call function to populate node (WOI) list view
+        self.selectedWOI = None
         self.populateWoiList()
 
         # Call function to populate node (Transactions) list view
         self.populateTransactionList()
 
-        # Initialize default values for dashboard
-        self.initDashboardDefaultValues()
-
-        # Setup on-click events
+        # Setup events
         self.setupEvents()
+
+        # Set page to loaded once all setup / config is done
+        self.loaded = 1
 
     def config_dashboard(self):
         """
@@ -196,16 +329,16 @@ class Dashboard(QMainWindow):
                                      int(self.resolution.height() * SCREEN_HEIGHT * FLABEL_HEIGHT))
 
         # Set QLineEdit (walletLineEdit) position and size
-        self.walletLineEdit.setGeometry(int(self.resolution.width() * SCREEN_WIDTH * (WEBPANEL_WIDTH + 0.015 + FLABEL_WIDTH)),
+        self.walletLineEdit.setGeometry(int(self.resolution.width() * SCREEN_WIDTH * (WEBPANEL_WIDTH + 0.018 + FLABEL_WIDTH)),
                                         int(self.resolution.height() * SCREEN_HEIGHT * FEDIT_Y_OFFSET),
                                         int(self.resolution.width() * SCREEN_WIDTH * FEDIT_WIDTH),
                                         int(self.resolution.height() * SCREEN_HEIGHT * FEDIT_HEIGHT))
 
-        # Set QPushButton (viewTransactionsBtn) position and size
-        self.viewTransactionsBtn.setGeometry(int(self.resolution.width() * (1 - 0.133)),
-                                             int(self.resolution.height() * SCREEN_HEIGHT * VTBTN_Y_OFFSET),
-                                             int(self.resolution.width() * SCREEN_WIDTH * VTBTN_WIDTH),
-                                             int(self.resolution.height() * SCREEN_HEIGHT * VTBTN_HEIGHT))
+        # Set QPushButton (addNodeBtn) position and size
+        self.addNodeBtn.setGeometry(int(self.resolution.width() * SCREEN_WIDTH * (1 - 0.072)),
+                                             int(self.resolution.height() * SCREEN_HEIGHT * ANBTN_Y_OFFSET),
+                                             int(self.resolution.width() * SCREEN_WIDTH * ANBTN_WIDTH),
+                                             int(self.resolution.height() * SCREEN_HEIGHT * ANBTN_HEIGHT))
 
         # Set QListWidget (listWidget) position and size
         self.nodeListWidget.setGeometry(int(self.resolution.width() * WEBPANEL_WIDTH),
@@ -291,18 +424,23 @@ class Dashboard(QMainWindow):
                                         int(self.resolution.width() * SIDEPANEL_WIDTH),
                                         int(self.resolution.height() * SCREEN_HEIGHT * TLIST_HEIGHT))
 
-        # Set QPushButton (dropRelationshipBtn) position and size
-        self.dropRelationshipBtn.setGeometry(int(self.resolution.width() * (1 - RS_BTN_SPACING * 0.1325)),
+        # Set QPushButton (dropRelationshipBtn) position and size   0.829 (1612px)
+        self.dropRelationshipBtn.setGeometry(int(self.resolution.width() * SCREEN_WIDTH * (1 - 0.171)),
                                             int(self.resolution.height() * SCREEN_HEIGHT * RS_BTN_Y_OFFSET),
                                             int(self.resolution.width() * RS_BTN_WIDTH),
                                             int(self.resolution.height() * RS_BTN_HEIGHT))
 
-        # Set QPushButton (addRelationshipBtn) position and size
-        self.addRelationshipBtn.setGeometry(int(self.resolution.width() * (1 - 0.1325)),
+        # Set QPushButton (addRelationshipBtn) position and size 0.913 (1776px)
+        self.addRelationshipBtn.setGeometry(int(self.resolution.width() * SCREEN_WIDTH * (1 - 0.087)),
                                     int(self.resolution.height() * SCREEN_HEIGHT * RS_BTN_Y_OFFSET),
                                     int(self.resolution.width() * RS_BTN_WIDTH),
                                     int(self.resolution.height() * RS_BTN_HEIGHT))
 
+        # Set QPushButton (dropNodeBtn) position and size
+        self.dropNodeBtn.setGeometry(int(self.resolution.width() * SCREEN_WIDTH * (1 - 0.255)),
+                                            int(self.resolution.height() * SCREEN_HEIGHT * RS_BTN_Y_OFFSET),
+                                            int(self.resolution.width() * RS_BTN_WIDTH),
+                                            int(self.resolution.height() * RS_BTN_HEIGHT))
 
     def initWebView(self):
         """
@@ -328,9 +466,18 @@ class Dashboard(QMainWindow):
         Function to update graph contents and save to a new .html file
         :return: None
         """
+        # Reset graph
+        self.createGraph()
+
         # Add all given nodes to the graph
         for wallet in self.wallets_of_interest:
-            self.graph.add_node(wallet, wallet[:ADDR_DISPLAY_LIMIT], color=DEFAULT_COLORS[random.randint(0,3)])
+            # Set display label (for the node in the graph) using the alias if it exists
+            if wallet in self.homeparent.caseinfo["aliases"].keys():
+                display_lbl = self.homeparent.caseinfo["aliases"][wallet]
+            else:
+                display_lbl = wallet[:ADDR_DISPLAY_LIMIT]
+
+            self.graph.add_node(wallet, display_lbl, color=DEFAULT_COLORS[random.randint(0,3)])
 
         # Add all relationships (if any)
         for focus, relatives in self.wallet_relationships.items():
@@ -344,86 +491,134 @@ class Dashboard(QMainWindow):
     def addNode(self, woi):
         """
         Function to add a specific address as a new node into the graph and backend structs
-        :param woi: The wallet address that user wants to add to the graph as a node
+        :param woi: The wallet address that user wants to add to the graph as a node (MUST BE IN LOWERCASE!!!)
         :return: None
         """
         if woi not in self.wallets_of_interest:
             # Append wallet to list of interested wallets
             self.wallets_of_interest.append(woi)
-            # Add node to graph
-            self.graph.add_node(woi, woi[:ADDR_DISPLAY_LIMIT], color=DEFAULT_COLORS[random.randint(0, 4)])
 
     def addNodeBtnHandler(self):
         """
-        Function to handle '' button to add a new node and render the change on the graph
+        Function to handle 'Add Node' button to add a new node and render the change on the graph
         :return: None
         """
-        woi = "0x0000000000000000000000000000000000000001"
-        self.addNode(woi)
+        # If input text is a valid wallet address and it does not already exist
+        woi = self.walletLineEdit.text().split('\t')[0].lower()
+        if self.homeparent.isValidWalletAddress(woi):
+            if woi not in self.wallets_of_interest:
+                self.addNode(woi)
 
-        # Reload the graph
-        self.graph.save_graph("graph.html")
-        self.loadPage('graph.html')
+                # Update the WOI Node List
+                self.populateWoiList()
+
+                # Reload the graph
+                self.populateGraph()
+
+                # Clear 'walletLineEdit' text
+                self.walletLineEdit.clear()
+            else:
+                self.homeparent.displayMessage("[-] Unable to add node:\nNode with this address already exists")
+        else:
+            self.homeparent.displayMessage("[-] Unable to add node:\nInvalid wallet address given")
 
     def dropNode(self, woi):
         """
         Function to drop a specific address node from the graph.
         Doing so will also automatically delete all relationships the node has (if any)
-        :param woi: The wallet node that user wants to drop from the graph
+        :param woi: The wallet node that user wants to drop from the graph (MUST BE IN LOWERCASE!!!)
         :return: None
         """
-        if woi not in self.wallets_of_interest:
+        # If woi in self.wallets_of_interest:
+        if woi in self.wallets_of_interest:
             # Delete wallet from list of interested wallets
             self.wallets_of_interest.remove(woi)
 
-            # Delete all wallet relationships
-            del self.wallet_relationships[woi]
+            # Delete all relationships this wallet has been registered with
+            try:
+                del self.wallet_relationships[woi]
+            except KeyError:
+                pass
 
-            # Remove all edges related to the node
-            edges_to_drop = [edge for edge in self.graph.get_edges() if edge['from'] == woi or edge['to'] == woi]
-            for edge in edges_to_drop:
-                del self.graph.edges[self.graph.edges.index(edge)]
-
-            # Remove the node
-            self.graph.nodes.remove(self.graph.nodes.index(woi))
+            # If wallet exists as a relationship under the registration of another wallet, Delete it
+            to_remove = list()
+            for focus, relatives in self.wallet_relationships.items():
+                for relative in relatives:
+                    if woi == relative[ADDR]:
+                        to_remove.append({"focus": focus, "relative": relative})
+            for removable in to_remove:
+                self.wallet_relationships[removable["focus"]].remove(removable["relative"])
 
     def dropNodeBtnHandler(self):
         """
-        Function to handle '' button to drop a existing node and render the change on the graph
-        :return: None
-        """
-        woi = "0x0000000000000000000000000000000000000001"
-        self.dropNode(woi)
-
-        # Reload the graph
-        self.graph.save_graph("graph.html")
-        self.loadPage('graph.html')
-
-    def addRelationship(self):
-        """
-        Function to update (1) backend data structs and (2) graph WRT to adding a WOI
+        Function to handle 'Drop Node' button to drop a existing node and render the change on the graph
         :return: None
         """
         try:
-            focusedWallet = self.nodeListWidget.currentItem().text()   # selected node
-            woi = self.transactionListWidget.currentItem().text()      # selected transaction
+            woi = self.nodeListWidget.currentItem().text().split('\t')[0].lower()
+            # If woi in self.wallets_of_interest:
+            if woi in self.wallets_of_interest:
+                self.dropNode(woi)
 
-            # Add node to graph and wallet_of_interest if necessary (node doesn't exist yet)
+                # Update the WOI Node List
+                self.populateWoiList()
+
+                # Reload the graph
+                self.populateGraph()
+        except AttributeError as err:
+            # Add notification to user telling them to select a WOI (node)
+            if self.loaded:
+                self.homeparent.displayMessage("[-] Unable to drop node:\nNo node (WOI) was selected")
+
+    def getRSWeight(self, focus_node, txn_addr):
+        """
+        Function to get a corresponding weight for the rs between WOI and address selected in the transaction list
+        :return weight: An integer representation of the weight to draw for relationship of given woi & transaction
+        """
+        total_txn_count = int()
+        if txn_addr in self.homeparent.caseinfo['data'][STATS][focus_node][UNIQ_IN].keys():
+            total_txn_count += self.homeparent.caseinfo['data'][STATS][focus_node][UNIQ_IN][txn_addr]
+        if txn_addr in self.homeparent.caseinfo['data'][STATS][focus_node][UNIQ_OUT].keys():
+            total_txn_count += self.homeparent.caseinfo['data'][STATS][focus_node][UNIQ_OUT][txn_addr]
+
+        if total_txn_count < LOWER_BOUND:
+            return LOW_WEIGHT
+        elif total_txn_count <= MIDDLE_BOUND:
+            return MEDIUM_WEIGHT
+        else:
+            return HIGH_WEIGHT
+
+    def addRelationship(self):
+        """
+        Function to update backend data structs
+        :return: None
+        """
+        try:
+            focusedWallet = self.nodeListWidget.currentItem().text().split('\t')[0].lower()                # selected node
+            woi = self.transactionListWidget.currentItem().text().split("] ")[1].lower()    # selected transaction
+
+            # Add node to wallet_of_interest if necessary (node doesn't exist yet)
             self.addNode(woi)
 
             # Update WOI relationships
-            if woi != focusedWallet and [woi, 2] not in self.wallet_relationships[focusedWallet]:  # Change [woi, 2] to [woi, # of transactions]
-                # print(self.wallet_relationships[focusedWallet])
-                self.wallet_relationships[focusedWallet].append([woi, 2])
-                # print(self.wallet_relationships[focusedWallet])
-                self.graph.add_edge(focusedWallet, woi, value=DEFAULT_WEIGHT)   # Change DEFAULT_WEIGHT to # of transactions
+            if focusedWallet not in self.wallet_relationships.keys():
+                self.wallet_relationships[focusedWallet] = list()
+            # If relationship does not already exist, add it
+            if woi != focusedWallet:
+                # Get weight of relationship between focusedWallet and woi
+                weight = self.getRSWeight(focusedWallet, woi)
+                if [woi, weight] not in self.wallet_relationships[focusedWallet]:
+                    self.wallet_relationships[focusedWallet].append([woi, weight])
 
-                # Reload the graph
-                self.graph.save_graph("graph.html")
-                self.loadPage('graph.html')
+                    # Update the WOI Node List
+                    self.populateWoiList()
+
+                    # Reload the graph
+                    self.populateGraph()
         except AttributeError as err:
             # Add notification to user telling them to select a WOI (node)
-            print(f"No woi selected!\n{err}")
+            if self.loaded:
+                self.homeparent.displayMessage("[-] Unable to add relationship:\nPlease select (1) a node and (2) a transaction address")
 
     def dropRelationship(self):
         """
@@ -431,119 +626,170 @@ class Dashboard(QMainWindow):
         :return: None
         """
         try:
-            focusedWallet = self.nodeListWidget.currentItem().text()   # selected node
-            woi = self.transactionListWidget.currentItem().text()      # selected transaction
+            focusedWallet = self.nodeListWidget.currentItem().text().split('\t')[0].lower()   # selected node
+            woi = self.transactionListWidget.currentItem().text().split("] ")[1].lower()      # selected transaction
+            # Exit function if key of focusedWallet (selected node in Node List) does not exist
+            if focusedWallet not in self.wallet_relationships.keys():
+                return
 
             # Remove WOI relationship
-            if woi != focusedWallet and [woi, 2] in self.wallet_relationships[focusedWallet]:  # Change [woi, 2] to [woi, # of transactions]
-                del self.wallet_relationships[focusedWallet][self.wallet_relationships[focusedWallet].index([woi, 2])]
-                try:
-                    rs = [edge for edge in self.graph.get_edges() if edge['from'] == focusedWallet and edge['to'] == woi][0]
-                    del self.graph.edges[self.graph.edges.index(rs)]
-                except IndexError:
-                    print(f"[!] Couldn't delete RS from '{focusedWallet}' to '{woi}'")
-                    pass
-                # Reload the graph
-                self.graph.save_graph("graph.html")
-                self.loadPage('graph.html')
+            if woi != focusedWallet:
+                # Get weight of relationship between focusedWallet and woi
+                weight = self.getRSWeight(focusedWallet, woi)
+                if [woi, weight] in self.wallet_relationships[focusedWallet]:
+                    del self.wallet_relationships[focusedWallet][self.wallet_relationships[focusedWallet].index([woi, weight])]
+                    try:
+                        # Delete node if no more edges exists for it
+                        if woi not in self.wallet_relationships.keys() and woi in self.wallets_of_interest:
+                            self.dropNode(woi)
+                    except IndexError as err:
+                        if self.loaded:
+                            self.homeparent.displayMessage(
+                                f"[-] Unable to delete relationship between:\n'{focusedWallet}'\nto\n'{woi}'\n\nReason: {err}")
+
+                    # Update the WOI Node List
+                    self.populateWoiList()
+
+                    # Reload the graph
+                    self.populateGraph()
         except AttributeError as err:
             # Add notification to user telling them to select a WOI (node)
-            print(f"No woi selected!\n{err}")
+            if self.loaded:
+                self.homeparent.displayMessage(
+                    "[-] Unable to drop relationship:\nPlease select (1) a node and (2) a transaction address")
 
     def populateWoiList(self):
         """
         Function to populate WOI (nodes) list
         :return: None
         """
-        # Reset the WOI list
-        self.nodeListWidget.clear()
+        try:
+            # Get the currently selected item
+            previous = self.nodeListWidget.currentItem()
+            if previous is not None:
+                previous = previous.text().split('\t')[0].lower()
 
-        # Add all WOI into the list
-        for wallet in self.wallets_of_interest:
-            temp = QListWidgetItem()
-            temp.setText(wallet)
-            # temp.setToolTip("Yo mum g@y")           # ** Change to total # of transactions once backend code integrated **
-            self.nodeListWidget.addItem(temp)
+            # Reset the WOI list
+            self.nodeListWidget.clear()
 
-        # Set default selection of node list to the first item
-        # self.nodeListWidget.set
+            # Add all WOI into the list
+            for wallet in self.wallets_of_interest:
+                temp = QListWidgetItem()
+                # Set Alias at end of WOI address if it exists
+                if wallet in self.homeparent.caseinfo["aliases"].keys():
+                    temp.setText(wallet + f"\t[{self.homeparent.caseinfo['aliases'][wallet]}]")
+                else:
+                    temp.setText(wallet)
+                # Set tooltip (hover) over each WOI entry as the total transactions it has (incoming+outgoing)
+                if STATS in self.homeparent.caseinfo["data"].keys():
+                    if wallet in self.homeparent.caseinfo["data"][STATS].keys():
+                        temp.setToolTip(f"Total Transactions: {self.homeparent.caseinfo['data'][STATS][wallet][TOTAL_TXNS]}")
+                    else:
+                        temp.setToolTip(f"Total Transactions: [NO DATA]")
+                else:
+                    print("[-] No STATS")
+                self.nodeListWidget.addItem(temp)
+
+            # Set previous item as selected if it still exists
+            prev_item = self.nodeListWidget.findItems(previous, Qt.MatchContains)
+            if previous is not None and len(prev_item) > 0:
+                self.nodeListWidget.setCurrentItem(prev_item[0])
+        except RuntimeError:
+            pass
 
     def populateTransactionList(self):
         """
-        Function to populate Transaction list view based on currently selected filters / sorting choice
+        Function to populate self.dataset based on currently selected filters (INCOMING/OUTGOING/ALL) and calls
+        self.refreshView() to display the items accordingly
         :return: None
         """
-        # Check if transaction data exists for current node, if no query API for it first
-
         # Get the data into local structure
         try:
             # Get the selected WOI (only one should be selected at any one time)
-            focus_node = self.nodeListWidget.currentItem().text()
+            focus_node = self.nodeListWidget.currentItem().text().split('\t')[0].lower()
+
+            # Check if transaction data exists for current (focus) node, if no query API for it first
+            if SANITIZED_DATA in self.homeparent.caseinfo["data"].keys():
+                if focus_node not in self.homeparent.caseinfo["data"][SANITIZED_DATA].keys():
+                    # !!! @gerald @clement substitute with function call to query API for focus_node !!!
+                    return
+            else:
+                # No SANITIZED field in dictionary, just return since no data at all
+                return
 
             # Retrieve the following filters / choices
             # 1) Transaction Type (Outgoing/Incoming/All)
             # 2) Time Range (Start/End datetime, inclusive)
-            trans_type = self.transactionTypePicker.currentText()
-            start_datetime = self.timeStartPicker.dateTime().toSecsSinceEpoch()
-            end_datetime = self.timeEndPicker.dateTime().toSecsSinceEpoch()
+            trans_type = self.transactionTypePicker.currentText().lower()
+            start_datetime = int(self.timeStartPicker.dateTime().toSecsSinceEpoch())
+            end_datetime = int(self.timeEndPicker.dateTime().toSecsSinceEpoch())
+
+            # Set flag for filter the dataset if there exists user input in the transaction search filter
+            search_str = self.transactionFilterEdit.text().lower()
 
             # Get focused dataset based on the specified transaction type and time range
-            self.dataset = [x for x in self.caseinfo["data"][focus_node][trans_type]
-                            if start_datetime <= x["timestamp"] <= end_datetime]
+            if trans_type == ALL:
+                self.dataset = [x for x in self.homeparent.caseinfo["data"][SANITIZED_DATA][focus_node][INBOUND]
+                                if start_datetime <= int(x[TIMESTAMP]) <= end_datetime and search_str in x[FROM]] + \
+                               [x for x in self.homeparent.caseinfo["data"][SANITIZED_DATA][focus_node][OUTBOUND]
+                                if start_datetime <= int(x[TIMESTAMP]) <= end_datetime and search_str in x[TO]]
+            else:
+                target = FROM if trans_type == INBOUND else TO
+                self.dataset = [x for x in self.homeparent.caseinfo["data"][SANITIZED_DATA][focus_node][trans_type]
+                                if start_datetime <= int(x[TIMESTAMP]) <= end_datetime and search_str in x[target]]
 
-            # Sort them into unique addresses
+            # Count # of transactions (that has been time range filtered) by transaction address
             self.group_transactions()
 
             # Refresh the Transaction List view with newly filtered and sorted data
             self.refreshView()
 
-        except AttributeError as err:
+        except AttributeError:
             # Add notification to user telling them to select a WOI (node)
-            print(f"No woi selected!\n{err}")
-
-    def group_transactions(self):
-        """
-        Function to group transaction count by address into a dictionary, based on data in "self.dataset"
-        :return: None
-        """
-        # Check if there is data to work with in the first place
-        if len(self.dataset) <= 0:
-            return
-
-        # Loop through all transactions
-        for x in self.dataset:
-            # Get the direction for this transaction (is it a incoming/outgoing transaction)
-            direction = "from" if self.dataset[0]["direction"] == INBOUND else "to"
-
-            # Init / add a counter for the specific address in the dictionary accordingly
-            if x[f"{direction}"] not in self.transactions_by_address:
-                self.transactions_by_address[x[f"{direction}"]] = 1
-            else:
-                self.transactions_by_address[x[f"{direction}"]] += 1
+            if self.loaded:
+                self.homeparent.displayMessage("[-] No node (WOI) selected!")
+        except RuntimeError:
+            pass
 
     def refreshView(self):
         """
         Function to populate Transaction list view based on currently specified sorting choice
         :return: None
         """
+        # Claer transaction list
+        self.transactionListWidget.clear()
+
         # Get display order
         display_order = self.displayOrderPicker.currentText()
-        reverse_flag = False if display_order == "Descending" else True
+        reverse_flag = True if display_order == "Descending" else False
 
         # Sort the transactions by count
-            # Instead of manual sorting, try QListWidget::sortItems(order)
-            # > https://doc.qt.io/qt-5/qlistwidget.html#sortItems
         self.sorted_addresses = sorted(self.transactions_by_address.items(),
                                               key=lambda item: item[1], reverse=reverse_flag)
-
-        # Reset the Transaction list
-        self.transactionListWidget.clear()
 
         # Add the transactions into the Transaction list view in specified display order
         for [addr,count] in self.sorted_addresses:
             temp = QListWidgetItem()
             temp.setText(f"[{count}] {addr}")
             self.transactionListWidget.addItem(temp)
+
+    def group_transactions(self):
+        """
+        Function to group transaction count by address into a dictionary, based on data in "self.dataset"
+        :return: None
+        """
+        # Reset Transaction by address dictionary
+        self.transactions_by_address = dict()
+
+        # Loop through all transactions
+        for x in self.dataset:
+            # Get the direction for this transaction (is it a incoming/outgoing transaction)
+            direction = FROM if x["direction"] == IN else TO
+            # Init / add a counter for the specific address in the dictionary accordingly
+            if x[f"{direction}"] not in self.transactions_by_address:
+                self.transactions_by_address[x[f"{direction}"]] = 1
+            else:
+                self.transactions_by_address[x[f"{direction}"]] += 1
 
     def searchWOIAddresses(self):
         """
@@ -557,46 +803,40 @@ class Dashboard(QMainWindow):
         # Reset the list widget
         self.nodeListWidget.clear()
 
-        # Add items into Node ListWidget if they contain 'search_str' as a sub-string
-        for woi in self.wallets_of_interest:
-            if re.search(search_str, woi):
+        # Add all WOI into the list
+        for wallet in self.wallets_of_interest:
+            if re.search(search_str, wallet):
                 temp = QListWidgetItem()
-                temp.setText(f"{woi}")
+                # Set Alias at end of WOI address if it exists
+                if wallet in self.homeparent.caseinfo["aliases"].keys():
+                    temp.setText(wallet + f"\t[{self.homeparent.caseinfo['aliases'][wallet]}]")
+                else:
+                    temp.setText(wallet)
+                # Set tooltip (hover) over each WOI entry as the total transactions it has (incoming+outgoing)
+                if wallet in self.homeparent.caseinfo["data"][STATS].keys():
+                    temp.setToolTip(
+                        f"Total Transactions: {self.homeparent.caseinfo['data'][STATS][wallet][TOTAL_TXNS]}")
+                else:
+                    temp.setToolTip(f"Total Transactions: [NO DATA]")
                 self.nodeListWidget.addItem(temp)
-
-    def searchTransactionAddresses(self):
-        """
-        Function to filter displayed Transactions by comparing user search string input
-        with each transaction address in the Transaction List view (widget)
-        :return: None
-        """
-        # Get current text in the "transactionFilterEdit" widget
-        search_str = self.transactionFilterEdit.text()
-
-        # Reset the list widget
-        self.transactionListWidget.clear()
-
-        # Iterate through each QListWidgetItem in "transactionListWidget"
-        for [addr,count] in self.sorted_addresses:
-            if re.search(search_str, addr):
-                temp = QListWidgetItem()
-                temp.setText(f"[{count}] {addr}")
-                self.transactionListWidget.addItem(temp)
 
     def initDashboardDefaultValues(self):
         """
         Function to initialize default values for different UI elements (e.g. placeholder texts)
         :return: None
         """
+        # Init dashboard window title
+        self.setWindowTitle("Digifax - " + self.homeparent.caseinfo["filename"])
+
         # Set Placeholder text for "walletLineEdit"
-        self.walletLineEdit.setPlaceholderText("Search for node...")
+        self.walletLineEdit.setPlaceholderText("Node address")
         # Adjust default font size of "walletLineEdit"
-        self.walletLineEdit.setFont(QFont("Arial", 12))
+        # self.walletLineEdit.setFont(QFont("Arial", 12))
 
         # Set Placeholder text for "transactionFilterEdit"
         self.transactionFilterEdit.setPlaceholderText("Search for transaction...")
         # Adjust default font size of "transactionFilterEdit"
-        self.transactionFilterEdit.setFont(QFont("Arial", 12))
+        # self.transactionFilterEdit.setFont(QFont("Arial", 12))
 
         # Set Min,Max Datetimes for "timeStartPicker" & "timeEndPicker"
         currentDateTime = QDateTime.currentDateTime()
@@ -614,21 +854,47 @@ class Dashboard(QMainWindow):
         # WOI Search String Filter (Text Edited Event)
         self.walletLineEdit.textEdited.connect(self.searchWOIAddresses)
 
+        # View Transactions of selected WOI (On-Click Event)
+        self.addNodeBtn.clicked.connect(self.addNodeBtnHandler)
+
         # Open WOI profile (ListWidgetItem Double Clicked Event)
+        self.nodeListWidget.itemClicked.connect(self.copyToClipboard)
         self.nodeListWidget.itemDoubleClicked.connect(self.openWOIProfile)
 
         # Display Order Filter (Selection Changed Event)
         self.displayOrderPicker.activated.connect(self.refreshView)
 
         # Transaction Type Filter (Selection Changed Event)
-        self.transactionTypePicker.activated.connect(self.populateTransactionList)
+        self.transactionTypePicker.activated.connect(self.filter)
 
         # Transaction Search String Filter (Text Edited Event)
-        self.transactionFilterEdit.textEdited.connect(self.searchTransactionAddresses)
+        self.transactionFilterEdit.textEdited.connect(self.filter)
+
+        # Date Time Picker Changed ( Event)
+        self.timeStartPicker.dateTimeChanged.connect(self.filter)
+        self.timeEndPicker.dateTimeChanged.connect(self.filter)
+
+        # View transactions with selected Unique wallet address under current filter conditions
+        self.transactionListWidget.itemClicked.connect(self.clipTransaction)
+        self.transactionListWidget.itemDoubleClicked.connect(self.openTransactions)
 
         # Add / Drop Relationship (On-Click Event)
         self.addRelationshipBtn.clicked.connect(self.addRelationship)
         self.dropRelationshipBtn.clicked.connect(self.dropRelationship)
+
+        # Drop Node (On-Click Event)
+        self.dropNodeBtn.clicked.connect(self.dropNodeBtnHandler)
+
+        # Menubar Events
+        self.actionOpen.setShortcut("Ctrl+O")
+        self.actionSave.setShortcut("Ctrl+S")
+        self.actionHelp.setShortcut("Ctrl+I")
+        self.actionClose.setShortcut("Ctrl+D")
+        self.actionOpen.triggered.connect(self.open)
+        self.actionSave.triggered.connect(self.save)
+        self.actionSave_As.triggered.connect(self.saveAs)
+        self.actionHelp.triggered.connect(self.help)
+        self.actionClose.triggered.connect(self.closeDashboard)
 
     def loadPage(self, pagename):
         """
@@ -636,16 +902,92 @@ class Dashboard(QMainWindow):
         :param pagename: A string representation of a target webpage (.html) to render
         :return: None
         """
-        with open(pagename, 'r') as f:
-            html = f.read()
-        self.wev.setHtml(html)
+        try:
+            with open(pagename, 'r') as f:
+                html = f.read()
+            self.wev.setHtml(html)
+        except RuntimeError:
+            pass
+
+    def filter(self):
+        """
+        Function to handle any change in filter specified by user (transaction type, time range, search query)
+        :return: None
+        """
+        # Clear the transaction list
+        self.transactionListWidget.clear()
+
+        # Repopulate the transaction list
+        self.populateTransactionList()
+
+    def clipTransaction(self):
+        """
+        Function to put highlighted transaction in Transaction List Widget into clipboard
+        :return: None
+        """
+        copy(self.transactionListWidget.currentItem().text().split('] ')[1])
+
+    def copyToClipboard(self):
+        """
+        Function to put highlighted WOI in Node List Widget into clipboard
+        :return: None
+        """
+        copy(self.nodeListWidget.currentItem().text().split('\t')[0])
+        self.populateTransactionList()
 
     def openWOIProfile(self):
         """
         Handler function for opening new window for displaying a selected WOI's profile
         :return: None
         """
-        print(self.nodeListWidget.currentItem().text())
+        self.homeparent.openNodeProfileWindow(self.nodeListWidget.currentItem().text().split('\t')[0])
+
+    def openTransactions(self):
+        """
+        Handler function for opening transaction window WRT to all transactions
+        that current node has under specified filters
+        :return: None
+        """
+        selected_txn_addr = self.transactionListWidget.currentItem().text().split("] ")[1].lower()
+        txns = [txn for txn in self.dataset if selected_txn_addr in txn[FROM] or selected_txn_addr in txn[TO]]
+        self.homeparent.openTransactionWindow(txns)
+
+    def open(self):
+        """
+        Handler Function to open another case
+        :return: None
+        """
+        self.homeparent.openExistingCaseWindow()
+        self.closeDashboard()
+
+    def save(self):
+        """
+        Handler Function to save current work progress
+        :return: None
+        """
+        self.homeparent.saveFile(self.wallets_of_interest, self.wallet_relationships)
+
+    def saveAs(self):
+        """
+        Handler Function to save current work progress with a specific filename and location
+        :return: None
+        """
+        self.homeparent.saveFileAs(self.wallets_of_interest, self.wallet_relationships)
+
+    def help(self):
+        """
+        Handler Function to display help message box
+        :return: None
+        """
+        self.homeparent.displayMessage("[OPEN ANOTHER CASE]\nCTRL+O\n\n[SAVE CURRENT CASE]\nCTRL+S\n\n[SHOW THIS TOOLTIP]\nCTRL+I\n\n[CLOSE DASHBOARD]\nCTRL+D")
+
+    def closeDashboard(self):
+        """
+        Handler Function to close dashboard and go back to Home window
+        :return: None
+        """
+        self.close()
+        self.deleteLater()
 
 
 def main():
