@@ -960,6 +960,7 @@ class Dashboard(QMainWindow):
         self.homeparent.openExistingCaseWindow()
         self.closeDashboard()
 
+
     def save(self):
         """
         Handler Function to save current work progress
@@ -973,6 +974,7 @@ class Dashboard(QMainWindow):
         :return: None
         """
         self.homeparent.saveFileAs(self.wallets_of_interest, self.wallet_relationships)
+        self.setWindowTitle("Digifax - " + self.homeparent.caseinfo["filename"])
 
     def help(self):
         """
