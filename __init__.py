@@ -261,6 +261,9 @@ class Dashboard(QMainWindow):
         # Load the Home Window UI design from file
         uic.loadUi("./UI/dashboard.ui", self)
 
+        # Etherscan object
+        self.ethscan = DigiFax_EthScan()
+
         # Get all wallet addresses from the case
         # <Format> [WOI_1, WOI_2, WOI_3, ...]
         self.wallets_of_interest = list(set(self.homeparent.caseinfo["walletaddresses"]))
@@ -711,8 +714,16 @@ class Dashboard(QMainWindow):
             # Check if transaction data exists for current (focus) node, if no query API for it first
             if SANITIZED_DATA in self.homeparent.caseinfo["data"].keys():
                 if focus_node not in self.homeparent.caseinfo["data"][SANITIZED_DATA].keys():
-                    # !!! @gerald @clement substitute with function call to query API for focus_node !!!
-                    return
+                    msg = QMessageBox(self)
+                    msg.setText(f"Retrieving txns for address {focus_node.lower()}")
+                    msg.setWindowModality(0)
+                    msg.open()
+                    print(f"Retrieving txns for address {focus_node.lower()}")
+                    txns = self.ethscan.get_ext_txns([focus_node.lower()])
+                    self.ethscan.split_txns_based_on_direction(txns)
+                    self.ethscan.update_statistics()
+                    self.homeparent.caseinfo["data"][SANITIZED_DATA] = self.ethscan.ADDR_TXNS_SUMMARISED
+                    msg.close()
             else:
                 # No SANITIZED field in dictionary, just return since no data at all
                 return
