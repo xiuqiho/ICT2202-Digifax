@@ -9,7 +9,7 @@ from etherscan import Etherscan
 # from secrets import API_KEY
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen  # Python 3
-
+import socket
 from multiprocessing import Process, Manager
 
 import sys
@@ -103,6 +103,7 @@ class DigiFax_EthScan:
             return self.ADDR_LABELS[target_addr]
 
         req = Request(ETHERSCAN_SITE + target_addr)
+
         req.add_header('User-Agent',
                        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11')
         req.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
@@ -110,7 +111,13 @@ class DigiFax_EthScan:
         req.add_header('Accept-Encoding', 'none')
         req.add_header('Accept-Language', 'en-US,en;q=0.8')
         req.add_header('Connection', 'keep-alive')
-        content = urlopen(req).read()
+
+        try:
+            content = urlopen(url=req, timeout=2).read()
+        except socket.timeout:
+            content = ""
+            print_debug("Timeout!")
+
         soup = BeautifulSoup(content, "html.parser")
         res = soup.find_all('a', {'class': 'mb-1'})
         filtered_res = [elem.get_text() for elem in res]
@@ -151,13 +158,14 @@ class DigiFax_EthScan:
 
         return [len_all_txn, len_incoming_txn, len_outgoing_txn, len_contract_creation_txn]
 
-    def get_addr_txns(self, target_addr, return_txn, return_label, return_stat, direction=OUTGOING_FLAG) -> None:
+    def get_addr_txns(self, target_addr, progress_txn, progress_all_txn, return_txn, return_label, return_stat, direction=BOTH_FLAG) -> None:
         EtherScanObj = Etherscan(API_KEY)
 
         asserterror_flag = 0
         dict_indiv_txn = {}
         res = []
         expected_txn = 0
+        progress_txn[target_addr] = 0
 
         while not asserterror_flag:
             try:
@@ -180,8 +188,10 @@ class DigiFax_EthScan:
         elif direction == INCOMING_FLAG:
             expected_txn = len_incoming_txn
 
-        # if expected_txn >= 2000:
-        #     print_debug(f"Total of {expected_txn} transactions detected, program will only compile based on first 2000 transactions.")
+        progress_all_txn[target_addr] = expected_txn
+
+        # if expected_txn >= 200:
+        #     print_debug(f"Total of {expected_txn} transactions detected, program will only compile based on first 200 transactions.")
         #
         #     asserterror_flag = 0
         #
@@ -194,10 +204,12 @@ class DigiFax_EthScan:
         #             time.sleep(1)
         # else:
 
-        print_debug(f"Compiling transactions for address {target_addr}, expecting {expected_txn} transactions.")
+        print_debug(f"Compiling transactions for address {target_addr}, expecting {expected_txn} transactions. {len_incoming_txn} incoming, {len_outgoing_txn} outgoing")
 
-        for txn in list_full_txns:
+        for i, txn in enumerate(list_full_txns):
             if len(txn['to']) > 1:
+                progress_txn[target_addr] = progress_txn[target_addr] + 1
+
                 from_labels = self.get_addr_labels(txn["from"])
                 return_label.update({txn["from"]: from_labels})
 
@@ -216,40 +228,60 @@ class DigiFax_EthScan:
 
                 if txn['from'] == target_addr:
                     dict_indiv_txn.update({"direction": OUTGOING_FLAG})
-                    res.append(dict_indiv_txn.copy())
                 if txn['to'] == target_addr:
                     dict_indiv_txn.update({"direction": INCOMING_FLAG})
-                    res.append(dict_indiv_txn.copy())
+
+                res.append(dict_indiv_txn.copy())
 
             if len(res) == expected_txn:
                 break
 
         return_txn[target_addr] = res
 
-    def get_ext_txns(self, list_of_addr, direction=OUTGOING_FLAG) -> dict:
+    def get_ext_txns(self, list_of_addr, direction=BOTH_FLAG) -> dict:
         """This function allow you to list all the incoming or outgoing txns of a wallet address
         Information extracted: timeStamp, blockNumber, hash, labels, from, to, value"""
 
         start = time.time()
 
         process_list = []
+        addr_flag = {}
 
         # Initialise manager dictionary objects as a way of sharing data between processes
         manager = Manager()
         return_txn = manager.dict()
         return_label = manager.dict()
         return_stat = manager.dict()
+        progress_txn = manager.dict()
+        progress_all_txn = manager.dict()
 
         for addr in list_of_addr:
+            addr_flag[addr] = 0
+            if addr in self.ADDR_TXNS:
+                print_info("Address already queried!")
+                return_txn.update({addr : self.ADDR_TXNS[addr]})
+                continue
+
             p = Process(target=self.get_addr_txns,
-                        args=(addr.lower(), return_txn, return_label, return_stat, direction))
+                        args=(addr.lower(), progress_txn, progress_all_txn, return_txn, return_label, return_stat, direction))
             p.start()
             process_list.append(p)
+
+        while 1:
+            time.sleep(1)
+            for addr in list_of_addr:
+                try:
+                    print_info(f"{addr}: {progress_txn[addr]}/{progress_all_txn[addr]}")
+                    if progress_txn[addr] == progress_all_txn[addr]:
+                        addr_flag[addr] = 1
+                except KeyError:
+                    continue
+            if all(addr_flag.values()):
+                break
 
         for proc in process_list:
             proc.join()
 
-        print_debug(return_txn.keys())
         self.ADDR_TXNS.update(return_txn)
         self.ADDR_TXNS_STATS.update(return_stat)
         self.ADDR_LABELS.update(return_label)
@@ -260,6 +292,7 @@ class DigiFax_EthScan:
 
     def split_txns_based_on_direction(self, dict_all_txn):
         """This function will split the txns into unique incoming or outgoing txns"""
+
         for k, v in dict_all_txn.items():
 
             if k not in self.ADDR_TXNS_SUMMARISED:
@@ -276,10 +309,9 @@ class DigiFax_EthScan:
     def update_statistics(self):
         """This function will update self.ADDR_TXNS_STATS with unique incoming and outgoing txns for each addr"""
         # add uniq_incoming and uniq_outgoing to self.ADDR_TXNS_STATS[target_addr] using self.ADDR_TXNS_SUMMARISED
-        print()
-        print(SPACERS)
+        # print(SPACERS)
+
         for k, v in self.ADDR_TXNS_SUMMARISED.items():
-            print(k)
             self.ADDR_TXNS_STATS[k]['incoming_uniq'] = []
             self.ADDR_TXNS_STATS[k]['outgoing_uniq'] = []
             self.ADDR_TXNS_STATS[k]['incoming_uniq_data'] = {}
@@ -306,7 +338,7 @@ class DigiFax_EthScan:
             self.ADDR_TXNS_STATS[k]['outgoing_uniq'] = len(list(set(self.ADDR_TXNS_STATS[k].get('outgoing_uniq'))))
 
             # print(self.ADDR_TXNS_STATS[k])
-            print(SPACERS)
+            # print(SPACERS)
 
     def export_as_json(self, save_path):
         """
@@ -320,10 +352,6 @@ class DigiFax_EthScan:
 def main():
     digi = DigiFax_EthScan()
 
-    # input_addr = ["0x0Ea288c16bd3A8265873C8D0754B9b2109b5B810", "0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9",
-    #               "0xc084350789944A2A1af3c39b32937dcdd2AD2748", "0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A",
-    #               "0x7129bED9a5264F0cF279110ECE27add9B6662bD5", "0x81818e94F63c6F31569dc69D26CC79558BFbfda8",
-    #               "0x45fE3b59c201145B8E3BAD7661950DD3129be821"]
     input_addr = ['0xbdb5829f5452Bd10bb569B5B9B54732001ab5ab9', '0xddBd2B932c763bA5b1b7AE3B362eac3e8d40121A',
                   '0x7129bED9a5264F0cF279110ECE27add9B6662bD5']
 
