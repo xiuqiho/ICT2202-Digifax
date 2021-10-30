@@ -606,10 +606,12 @@ class Dashboard(QMainWindow):
             # Update WOI relationships
             if focusedWallet not in self.wallet_relationships.keys():
                 self.wallet_relationships[focusedWallet] = list()
+
             # If relationship does not already exist, add it
             if woi != focusedWallet:
                 # Get weight of relationship between focusedWallet and woi
                 weight = self.getRSWeight(focusedWallet, woi)
+
                 if [woi, weight] not in self.wallet_relationships[focusedWallet]:
                     self.wallet_relationships[focusedWallet].append([woi, weight])
 
@@ -618,6 +620,7 @@ class Dashboard(QMainWindow):
 
                     # Reload the graph
                     self.populateGraph()
+
         except AttributeError as err:
             # Add notification to user telling them to select a WOI (node)
             if self.loaded:
@@ -714,16 +717,18 @@ class Dashboard(QMainWindow):
             # Check if transaction data exists for current (focus) node, if no query API for it first
             if SANITIZED_DATA in self.homeparent.caseinfo["data"].keys():
                 if focus_node not in self.homeparent.caseinfo["data"][SANITIZED_DATA].keys():
-                    msg = QMessageBox(self)
-                    msg.setText(f"Retrieving txns for address {focus_node.lower()}")
-                    msg.setWindowModality(0)
-                    msg.open()
-                    print(f"Retrieving txns for address {focus_node.lower()}")
-                    txns = self.ethscan.get_ext_txns([focus_node.lower()])
+                    self.homeparent.displayMessage(f"Retrieving txns for address {focus_node.lower()}")
+                    # msg = QMessageBox(self)
+                    # msg.setText(f"Retrieving txns for address {focus_node.lower()}")
+                    # msg.setWindowModality(0)
+                    # msg.open()
+                    # msg.open()
+                    txns = self.ethscan.get_ext_txns([focus_node])
                     self.ethscan.split_txns_based_on_direction(txns)
                     self.ethscan.update_statistics()
-                    self.homeparent.caseinfo["data"][SANITIZED_DATA] = self.ethscan.ADDR_TXNS_SUMMARISED
-                    msg.close()
+                    self.homeparent.caseinfo["data"][SANITIZED_DATA][focus_node] = self.ethscan.ADDR_TXNS_SUMMARISED[focus_node]
+                    self.homeparent.caseinfo["data"][STATS][focus_node] = self.ethscan.ADDR_TXNS_STATS[focus_node]
+                    # msg.close()
             else:
                 # No SANITIZED field in dictionary, just return since no data at all
                 return
@@ -970,7 +975,6 @@ class Dashboard(QMainWindow):
         """
         self.homeparent.openExistingCaseWindow()
         self.closeDashboard()
-
 
     def save(self):
         """
