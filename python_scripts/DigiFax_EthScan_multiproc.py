@@ -168,25 +168,20 @@ class DigiFax_EthScan:
     def get_addr_txns(self, target_addr, progress_txn, progress_all_txn, return_txn, return_stat, direction=BOTH_FLAG) -> None:
         EtherScanObj = Etherscan(API_KEY)
 
-        asserterror_flag = 0
         dict_indiv_txn = {}
         res = []
         expected_txn = 0
         progress_txn[target_addr] = 0
         list_full_txns = None
 
-        while not asserterror_flag:
-            try:
-                list_full_txns = EtherScanObj.get_normal_txs_by_address(target_addr, 0, 9999999999, 'asc')
-                # only when there are no errors, and transactions are successfully obtained, will the program proceed
-                asserterror_flag = 1
-            except AssertionError:
-                print_info(f"{target_addr} does not have any transaction!")
-                progress_all_txn[target_addr] = 0
-                asserterror_flag = 1
-                # time.sleep(1)
+        try:
+            list_full_txns = EtherScanObj.get_normal_txs_by_address(target_addr, 0, 9999999999, 'asc')
+            # only when there are no errors, and transactions are successfully obtained, will the program proceed
+        except AssertionError:
+            print_info(f"{target_addr} does not have any transaction!")
+            progress_all_txn[target_addr] = 0
 
-        print_debug(f"Compiling expected transactions for address {target_addr}")
+        print_debug(f"Compiling expected transactions for address {target_addr.strip()}")
 
         len_all_txn, len_incoming_txn, len_outgoing_txn, len_contract_creation_txn = self.get_addr_stats(target_addr,
                                                                                                          list_full_txns)
@@ -217,7 +212,7 @@ class DigiFax_EthScan:
         #             time.sleep(1)
         # else:
 
-        print_debug(f"Compiling transactions for address {target_addr}, expecting {expected_txn} transactions. {len_incoming_txn} incoming, {len_outgoing_txn} outgoing")
+        print_debug(f"Compiling transactions for address {target_addr.strip()}, expecting {expected_txn} transactions. {len_incoming_txn} incoming, {len_outgoing_txn} outgoing")
 
         if list_full_txns:
             for i, txn in enumerate(list_full_txns):
