@@ -266,7 +266,6 @@ class Dashboard(QMainWindow):
 
         # Etherscan object
         self.ethscan = DigiFax_EthScan()
-        self.all_threads = []
 
         # Get all wallet addresses from the case
         # <Format> [WOI_1, WOI_2, WOI_3, ...]
@@ -709,6 +708,9 @@ class Dashboard(QMainWindow):
 
 
     def populateTransactionList_helperfunc(self, focus_node):
+        """
+        Helper function to populateTransactionList(), helper function's main purpose is multithreading.
+        """
 
         self.homeparent.caseinfo["data"][SANITIZED_DATA][focus_node] = {}
 
@@ -718,30 +720,10 @@ class Dashboard(QMainWindow):
         self.homeparent.caseinfo["data"][SANITIZED_DATA][focus_node] = self.ethscan.ADDR_TXNS_SUMMARISED[focus_node]
         self.homeparent.caseinfo["data"][STATS][focus_node] = self.ethscan.ADDR_TXNS_STATS[focus_node]
 
-        # Retrieve the following filters / choices
-        # 1) Transaction Type (Outgoing/Incoming/All)
-        # 2) Time Range (Start/End datetime, inclusive)
-        trans_type = self.transactionTypePicker.currentText().lower()
-        start_datetime = int(self.timeStartPicker.dateTime().toSecsSinceEpoch())
-        end_datetime = int(self.timeEndPicker.dateTime().toSecsSinceEpoch())
-
-        # Set flag for filter the dataset if there exists user input in the transaction search filter
-        search_str = self.transactionFilterEdit.text().lower()
-
-        # Get focused dataset based on the specified transaction type and time range
-        if trans_type == ALL:
-            self.dataset = [x for x in self.homeparent.caseinfo["data"][SANITIZED_DATA][focus_node][INBOUND]
-                            if start_datetime <= int(x[TIMESTAMP]) <= end_datetime and search_str in x[FROM]] + \
-                           [x for x in self.homeparent.caseinfo["data"][SANITIZED_DATA][focus_node][OUTBOUND]
-                            if start_datetime <= int(x[TIMESTAMP]) <= end_datetime and search_str in x[TO]]
-        else:
-            target = FROM if trans_type == INBOUND else TO
-            self.dataset = [x for x in self.homeparent.caseinfo["data"][SANITIZED_DATA][focus_node][trans_type]
-                            if start_datetime <= int(x[TIMESTAMP]) <= end_datetime and search_str in x[target]]
-
-        # Count # of transactions (that has been time range filtered) by transaction address
-        self.group_transactions()
-
+        # If the focus node is still selected
+        if self.nodeListWidget.currentItem().text().split('\t')[0].lower() == focus_node:
+            # Refresh the Transaction List view with newly filtered and sorted data
+            self.refreshView()
 
     def populateTransactionList(self):
         """
@@ -758,10 +740,9 @@ class Dashboard(QMainWindow):
             # Check if transaction data exists for current (focus) node, if no query API for it first
             if SANITIZED_DATA in self.homeparent.caseinfo["data"].keys():
                 if focus_node not in self.homeparent.caseinfo["data"][SANITIZED_DATA].keys():
+                    # Blocking displayMessage.
                     self.homeparent.displayMessage(f"Retrieving txns for address {focus_node.lower()}")
-                    t = threading.Thread(target=self.populateTransactionList_helperfunc, args=([focus_node]))
-                    t.start()
-                    self.all_threads.append(t)
+                    threading.Thread(target=self.populateTransactionList_helperfunc, args=([focus_node])).start()
                     return
                 else:
                     # Retrieve the following filters / choices
