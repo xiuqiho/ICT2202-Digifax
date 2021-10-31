@@ -24,7 +24,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Visit Website</string>
+      <string>View on Etherscan</string>
      </property>
     </widget>
    <widget class="QTableWidget" name="tableWidget">
