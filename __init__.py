@@ -20,7 +20,8 @@ from pyvis.network import Network                       # Core library for produ
 from constants import *                                 # All constants used in the project
 from transactionWindow import TransactionWindow
 from nodeProfileWindow import NodeProfileWindow
-from python_scripts.DigiFax_EthScan_multiproc import DigiFax_EthScan
+# from python_scripts.DigiFax_EthScan_multiproc import DigiFax_EthScan
+from python_scripts.DigiFax_EthScan_multithread import DigiFax_EthScan
 
 import multiprocessing
 import threading
@@ -582,17 +583,21 @@ class Dashboard(QMainWindow):
         :return weight: An integer representation of the weight to draw for relationship of given woi & transaction
         """
         total_txn_count = int()
-        if txn_addr in self.homeparent.caseinfo['data'][STATS][focus_node][UNIQ_IN].keys():
-            total_txn_count += self.homeparent.caseinfo['data'][STATS][focus_node][UNIQ_IN][txn_addr]
-        if txn_addr in self.homeparent.caseinfo['data'][STATS][focus_node][UNIQ_OUT].keys():
-            total_txn_count += self.homeparent.caseinfo['data'][STATS][focus_node][UNIQ_OUT][txn_addr]
 
-        if total_txn_count < LOWER_BOUND:
-            return LOW_WEIGHT
-        elif total_txn_count <= MIDDLE_BOUND:
-            return MEDIUM_WEIGHT
-        else:
-            return HIGH_WEIGHT
+        try:
+            if txn_addr in self.homeparent.caseinfo['data'][STATS][focus_node][UNIQ_IN].keys():
+                total_txn_count += self.homeparent.caseinfo['data'][STATS][focus_node][UNIQ_IN][txn_addr]
+            if txn_addr in self.homeparent.caseinfo['data'][STATS][focus_node][UNIQ_OUT].keys():
+                total_txn_count += self.homeparent.caseinfo['data'][STATS][focus_node][UNIQ_OUT][txn_addr]
+
+            if total_txn_count < LOWER_BOUND:
+                return LOW_WEIGHT
+            elif total_txn_count <= MIDDLE_BOUND:
+                return MEDIUM_WEIGHT
+            else:
+                return HIGH_WEIGHT
+        except KeyError:
+            pass
 
     def addRelationship(self):
         """
@@ -711,9 +716,6 @@ class Dashboard(QMainWindow):
         """
         Helper function to populateTransactionList(), helper function's main purpose is multithreading.
         """
-
-        self.homeparent.caseinfo["data"][SANITIZED_DATA][focus_node] = {}
-
         txns = self.ethscan.get_ext_txns([focus_node])
         self.ethscan.split_txns_based_on_direction(txns)
         self.ethscan.update_statistics()
@@ -721,9 +723,9 @@ class Dashboard(QMainWindow):
         self.homeparent.caseinfo["data"][STATS][focus_node] = self.ethscan.ADDR_TXNS_STATS[focus_node]
 
         # If the focus node is still selected
-        if self.nodeListWidget.currentItem().text().split('\t')[0].lower() == focus_node:
+        # if self.nodeListWidget.currentItem().text().split('\t')[0].lower() == focus_node:
             # Refresh the Transaction List view with newly filtered and sorted data
-            self.refreshView()
+        print(f"Address: {focus_node} completed complilating.")
 
     def populateTransactionList(self):
         """
@@ -731,6 +733,7 @@ class Dashboard(QMainWindow):
         self.refreshView() to display the items accordingly
         :return: None
         """
+        self.refreshView()
 
         # Get the data into local structure
         try:
@@ -742,7 +745,11 @@ class Dashboard(QMainWindow):
                 if focus_node not in self.homeparent.caseinfo["data"][SANITIZED_DATA].keys():
                     # Blocking displayMessage.
                     self.homeparent.displayMessage(f"Retrieving txns for address {focus_node.lower()}")
+
+                    self.homeparent.caseinfo["data"][SANITIZED_DATA][focus_node] = {}
+
                     threading.Thread(target=self.populateTransactionList_helperfunc, args=([focus_node])).start()
+
                     return
                 else:
                     # Retrieve the following filters / choices
