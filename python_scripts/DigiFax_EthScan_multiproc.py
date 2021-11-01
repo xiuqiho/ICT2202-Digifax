@@ -258,7 +258,9 @@ class DigiFax_EthScan:
         progress_all_txn = manager.dict()
 
         for addr in list_of_addr:
+
             addr_flag[addr] = 0
+
             if addr in self.ADDR_TXNS:
                 print_info("Address already queried!")
                 return_txn.update({addr : self.ADDR_TXNS[addr]})
