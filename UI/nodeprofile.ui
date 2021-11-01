@@ -131,8 +131,33 @@
      <bool>false</bool>
     </property>
    </widget>
+   <widget class="QPushButton" name="openInWebsiteBtn">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>250</y>
+      <width>150</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>View on Website</string>
+    </property>
+    <property name="checkable">
+     <bool>false</bool>
+    </property>
+    <property name="autoDefault">
+     <bool>true</bool>
+    </property>
+    <property name="default">
+     <bool>false</bool>
+    </property>
+    <property name="flat">
+     <bool>false</bool>
+    </property>
+   </widget>
   </widget>
- </widget>
+  </widget>
  <resources/>
  <connections/>
 </ui>

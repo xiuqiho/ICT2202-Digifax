@@ -14,6 +14,7 @@ Aliases used:
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from PyQt5 import uic                                   # Library to load
 from constants import NPW_WIDTH, NPW_HEIGHT             # Constants for specifying window width/height
+import webbrowser                                       # For opening wallet addresses on the browser
 
 
 class NodeProfileWindow(QMainWindow):
@@ -50,10 +51,18 @@ class NodeProfileWindow(QMainWindow):
 
         # Connect buttons to on-click events
         self.saveAliasBtn.clicked.connect(self.saveProfileInfo)
+        self.openInWebsiteBtn.clicked.connect(self.openWalletInAddress)
 
         # Center the screen
         self.move(int(self.homeparent.db.resolution.width() / 2) - (NPW_WIDTH/2),
                   int(self.homeparent.db.resolution.height() / 2) - (NPW_HEIGHT/2))
+
+    def openWalletInAddress(self):
+        """
+        Function to open the current node's wallet address in a browser view
+        :return: None
+        """
+        webbrowser.open(f"https://etherscan.io/address/{self.focusnode}")
 
     def saveProfileInfo(self):
         """
