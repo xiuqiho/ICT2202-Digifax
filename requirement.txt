@@ -33,8 +33,6 @@ prompt-toolkit==3.0.21
 ptyprocess==0.7.0
 pycparser==2.20
 Pygments==2.10.0
-pyobjc-core==7.3
-pyobjc-framework-Cocoa==7.3
 pyOpenSSL==21.0.0
 pyperclip==1.8.2
 PyQt5==5.15.5

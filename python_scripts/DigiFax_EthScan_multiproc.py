@@ -121,8 +121,14 @@ class DigiFax_EthScan:
         soup = BeautifulSoup(content, "html.parser")
         res = soup.find_all('a', {'class': 'mb-1'})
         filtered_res = [elem.get_text() for elem in res]
+
         if not filtered_res:
             filtered_res = None
+        else:
+            try:
+                filtered_res.remove("Decompile Bytecode")
+            except ValueError:
+                pass
 
         self.ADDR_LABELS[target_addr] = filtered_res
 
@@ -142,8 +148,6 @@ class DigiFax_EthScan:
             len_outgoing_txn = 0
             len_contract_creation_txn = 0
         else:
-            EtherScanObj = Etherscan(API_KEY)
-
             len_all_txn = len(list_full_txns)
             len_incoming_txn = 0
             len_outgoing_txn = 0
@@ -198,19 +202,6 @@ class DigiFax_EthScan:
 
         progress_all_txn[target_addr] = expected_txn
 
-        # if expected_txn >= 200:
-        #     print_debug(f"Total of {expected_txn} transactions detected, program will only compile based on first 200 transactions.")
-        #
-        #     asserterror_flag = 0
-        #
-        #     while not asserterror_flag:
-        #         try:
-        #             list_full_txns = EtherScanObj.get_normal_txs_by_address_paginated(target_addr, 1, 4000, 0, 9999999999, 'asc')
-        #             # only when there are no errors, and transactions are successfully obtained, will the program proceed
-        #             asserterror_flag = 1
-        #         except AssertionError:
-        #             time.sleep(1)
-        # else:
 
         print_debug(f"Compiling transactions for address {target_addr.strip()}, expecting {expected_txn} transactions. {len_incoming_txn} incoming, {len_outgoing_txn} outgoing")
 

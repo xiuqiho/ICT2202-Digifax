@@ -17,14 +17,14 @@
     <widget class="QPushButton" name="websiteButton">
      <property name="geometry">
       <rect>
-       <x>1055</x>
+       <x>1045</x>
        <y>660</y>
-       <width>125</width>
+       <width>135</width>
        <height>25</height>
       </rect>
      </property>
      <property name="text">
-      <string>View on Etherscan</string>
+      <string>View on Website</string>
      </property>
     </widget>
    <widget class="QTableWidget" name="tableWidget">
