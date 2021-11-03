@@ -175,7 +175,7 @@ class DigiFax_EthScan:
         list_full_txns = None
 
         try:
-            list_full_txns = EtherScanObj.get_normal_txs_by_address(target_addr, 0, 9999999999, 'asc')
+            list_full_txns = EtherScanObj.get_normal_txs_by_address(target_addr, 0, 9999999999, 'desc')
             # only when there are no errors, and transactions are successfully obtained, will the program proceed
         except AssertionError:
             print_info(f"{target_addr} does not have any transaction!")

@@ -146,9 +146,9 @@ class DigiFax_EthScan:
 
         while not asserterror_flag:
             try:
-                dict_full_txns = self.EtherScanObj.get_normal_txs_by_address(target_addr, 0, 9999999999, 'age')
-                dict_full_txns = self.EtherScanObj.get_normal_txs_by_address_paginated(target_addr, 1, 2000, 0,
-                                                                                       9999999999, 'age')
+                dict_full_txns = self.EtherScanObj.get_normal_txs_by_address(target_addr, 0, 9999999999, 'desc')
+                # dict_full_txns = self.EtherScanObj.get_normal_txs_by_address_paginated(target_addr, 1, 2000, 0,
+                #                                                                        9999999999, 'age')
                 # only when there are no errors, and transactions are successfully obtained, will the program proceed
                 asserterror_flag = 1
             except AssertionError:
@@ -182,9 +182,9 @@ class DigiFax_EthScan:
 
         while not asserterror_flag:
             try:
-                # list_full_txns = self.EtherScanObj.get_normal_txs_by_address(target_addr, 0, 9999999999, 'age')
-                list_full_txns = self.EtherScanObj.get_normal_txs_by_address_paginated(target_addr, 1, 2000, 0,
-                                                                                       9999999999, 'age')
+                list_full_txns = self.EtherScanObj.get_normal_txs_by_address(target_addr, 0, 9999999999, 'desc')
+                # list_full_txns = self.EtherScanObj.get_normal_txs_by_address_paginated(target_addr, 1, 2000, 0,
+                #                                                                        9999999999, 'age')
                 # only when there are no errors, and transactions are successfully obtained, will the program proceed
                 asserterror_flag = 1
             except AssertionError:
