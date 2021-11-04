@@ -510,8 +510,8 @@ class Dashboard(QMainWindow):
         Function to handle 'Add Node' button to add a new node and render the change on the graph
         :return: None
         """
-        # If input text is a valid wallet address and it does not already exist
         woi = self.walletLineEdit.text().split(' ')[0].lower()
+        # If input text is a valid wallet address and it does not already exist
         if self.homeparent.isValidWalletAddress(woi):
             if woi not in self.wallets_of_interest:
                 self.addNode(woi)
