@@ -511,7 +511,7 @@ class Dashboard(QMainWindow):
         :return: None
         """
         # If input text is a valid wallet address and it does not already exist
-        woi = self.walletLineEdit.text().split('\t')[0].lower()
+        woi = self.walletLineEdit.text().split(' ')[0].lower()
         if self.homeparent.isValidWalletAddress(woi):
             if woi not in self.wallets_of_interest:
                 self.addNode(woi)
@@ -562,7 +562,7 @@ class Dashboard(QMainWindow):
         :return: None
         """
         try:
-            woi = self.nodeListWidget.currentItem().text().split('\t')[0].lower()
+            woi = self.nodeListWidget.currentItem().text().split(' ')[0].lower()
             # If woi in self.wallets_of_interest:
             if woi in self.wallets_of_interest:
                 self.dropNode(woi)
@@ -605,7 +605,7 @@ class Dashboard(QMainWindow):
         :return: None
         """
         try:
-            focusedWallet = self.nodeListWidget.currentItem().text().split('\t')[0].lower()                # selected node
+            focusedWallet = self.nodeListWidget.currentItem().text().split(' ')[0].lower()                # selected node
             woi = self.transactionListWidget.currentItem().text().split("] ")[1].lower()    # selected transaction
 
             # Add node to wallet_of_interest if necessary (node doesn't exist yet)
@@ -640,7 +640,7 @@ class Dashboard(QMainWindow):
         :return: None
         """
         try:
-            focusedWallet = self.nodeListWidget.currentItem().text().split('\t')[0].lower()   # selected node
+            focusedWallet = self.nodeListWidget.currentItem().text().split(' ')[0].lower()   # selected node
             woi = self.transactionListWidget.currentItem().text().split("] ")[1].lower()      # selected transaction
             # Exit function if key of focusedWallet (selected node in Node List) does not exist
             if focusedWallet not in self.wallet_relationships.keys():
@@ -681,7 +681,7 @@ class Dashboard(QMainWindow):
             # Get the currently selected item
             previous = self.nodeListWidget.currentItem()
             if previous is not None:
-                previous = previous.text().split('\t')[0].lower()
+                previous = previous.text().split(' ')[0].lower()
 
             # Reset the WOI list
             self.nodeListWidget.clear()
@@ -691,7 +691,7 @@ class Dashboard(QMainWindow):
                 temp = QListWidgetItem()
                 # Set Alias at end of WOI address if it exists
                 if wallet in self.homeparent.caseinfo["aliases"].keys():
-                    temp.setText(wallet + f"\t[{self.homeparent.caseinfo['aliases'][wallet]}]")
+                    temp.setText(wallet + f" [{self.homeparent.caseinfo['aliases'][wallet]}]")
                 else:
                     temp.setText(wallet)
                 # Set tooltip (hover) over each WOI entry as the total transactions it has (incoming+outgoing)
@@ -723,7 +723,7 @@ class Dashboard(QMainWindow):
         self.homeparent.caseinfo["data"][STATS][focus_node] = self.ethscan.ADDR_TXNS_STATS[focus_node]
 
         # If the focus node is still selected
-        # if self.nodeListWidget.currentItem().text().split('\t')[0].lower() == focus_node:
+        # if self.nodeListWidget.currentItem().text().split(' ')[0].lower() == focus_node:
             # Refresh the Transaction List view with newly filtered and sorted data
         print(f"Address: {focus_node} completed complilating.")
 
@@ -738,7 +738,7 @@ class Dashboard(QMainWindow):
         # Get the data into local structure
         try:
             # Get the selected WOI (only one should be selected at any one time)
-            focus_node = self.nodeListWidget.currentItem().text().split('\t')[0].lower()
+            focus_node = self.nodeListWidget.currentItem().text().split(' ')[0].lower()
 
             # Check if transaction data exists for current (focus) node, if no query API for it first
             if SANITIZED_DATA in self.homeparent.caseinfo["data"].keys():
@@ -851,7 +851,7 @@ class Dashboard(QMainWindow):
                 temp = QListWidgetItem()
                 # Set Alias at end of WOI address if it exists
                 if wallet in self.homeparent.caseinfo["aliases"].keys():
-                    temp.setText(wallet + f"\t[{self.homeparent.caseinfo['aliases'][wallet]}]")
+                    temp.setText(wallet + f" [{self.homeparent.caseinfo['aliases'][wallet]}]")
                 else:
                     temp.setText(wallet)
                 # Set tooltip (hover) over each WOI entry as the total transactions it has (incoming+outgoing)
@@ -974,7 +974,7 @@ class Dashboard(QMainWindow):
         Function to put highlighted WOI in Node List Widget into clipboard
         :return: None
         """
-        copy(self.nodeListWidget.currentItem().text().split('\t')[0])
+        copy(self.nodeListWidget.currentItem().text().split(' ')[0])
         self.populateTransactionList()
 
     def openWOIProfile(self):
@@ -982,7 +982,7 @@ class Dashboard(QMainWindow):
         Handler function for opening new window for displaying a selected WOI's profile
         :return: None
         """
-        self.homeparent.openNodeProfileWindow(self.nodeListWidget.currentItem().text().split('\t')[0])
+        self.homeparent.openNodeProfileWindow(self.nodeListWidget.currentItem().text().split(' ')[0])
 
     def openTransactions(self):
         """
