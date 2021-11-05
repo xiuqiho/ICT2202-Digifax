@@ -5,7 +5,7 @@ Date Completed: 25th Oct 2021
 Last Updated:   25th Oct 2021
 
 Description:
-> GUI code for the ICT2202 Team Assignment "Digifax" Home & Dashboard page
+> GUI code for the ICT2202 Team Assignment "DigiTrace" Home & Dashboard page
 
 Aliases used:
 > WOI = Wallet of Interest
@@ -868,7 +868,7 @@ class Dashboard(QMainWindow):
         :return: None
         """
         # Init dashboard window title
-        self.setWindowTitle("Digifax - " + self.homeparent.caseinfo["filename"])
+        self.setWindowTitle("DigiTrace - " + self.homeparent.caseinfo["filename"])
 
         # Set Placeholder text for "walletLineEdit"
         self.walletLineEdit.setPlaceholderText("Node address")
@@ -1022,7 +1022,7 @@ class Dashboard(QMainWindow):
         :return: None
         """
         self.homeparent.saveFileAs(self.wallets_of_interest, self.wallet_relationships)
-        self.setWindowTitle("Digifax - " + self.homeparent.caseinfo["filename"])
+        self.setWindowTitle("DigiTrace - " + self.homeparent.caseinfo["filename"])
 
     def help(self):
         """
