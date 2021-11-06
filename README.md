@@ -1,7 +1,7 @@
 # DigiTrace - An Ethereum Blockchain Visualiser
 [![DigiTrace, by DigiFax](https://pimp-my-readme.webapp.io/pimp-my-readme/wavy-banner?subtitle=by%20DigiFax&title=DigiTrace)](#)
 
-[![Visitor Counter for webapp.io](https://pimp-my-readme.webapp.io/pimp-my-readme/visitor-counter?page=google.com)](https://pimp-my-readme.webapp.io)
+[![Visitor Counter for webapp.io](https://pimp-my-readme.webapp.io/pimp-my-readme/visitor-counter?page=google.com)](#)
 
 Team DigiFax
 
@@ -87,4 +87,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 Powered by [Etherscan.io APIs](https://etherscan.io/apis#misc)
 
-[![_](https://pimp-my-readme.webapp.io/pimp-my-readme/technology?technology=_)](#)
+[![JavaScript_Express_Flask_HTML_CSS_Python_Java_NodeJS_GoLang_Elixir_MySQL_PostgreSQL_MongoDB_Redis_AWS_ReactJS_yomom](https://pimp-my-readme.webapp.io/pimp-my-readme/technology?technology=JavaScript_Express_Flask_HTML_CSS_Python_Java_NodeJS_GoLang_Elixir_MySQL_PostgreSQL_MongoDB_Redis_AWS_ReactJS_yomom)](https://pimp-my-readme.webapp.io)
