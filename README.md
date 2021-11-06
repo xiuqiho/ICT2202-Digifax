@@ -87,4 +87,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 Powered by [Etherscan.io APIs](https://etherscan.io/apis#misc)
 
-[![Python_PyVis_BeautifulSoup_QT Designer](https://pimp-my-readme.webapp.io/pimp-my-readme/technology?technology=Python_PyVis_BeautifulSoup_QT%20Designer)](https://pimp-my-readme.webapp.io)
+[![_](https://pimp-my-readme.webapp.io/pimp-my-readme/technology?technology=_)](#)
