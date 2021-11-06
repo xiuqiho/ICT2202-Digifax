@@ -32,7 +32,7 @@ Before getting started, make sure that you are running the correct version of Py
 
 1. Install the project requirements - ```pip3 install -r requirements.txt```
 2. Get a free API key from [Etherscan.io API page](https://etherscan.io/apis#misc)
-
+3. Copy and paste the API key into the variable API_KEY of DigiFax_EthScan_xxx.py 
 ---
 
 ## Usage
@@ -53,7 +53,6 @@ Before getting started, make sure that you are running the correct version of Py
   - [ ] FTM
   - [ ] Litecoin
   - [ ] Doge coin
-- [ ] 
 
 ---
 
