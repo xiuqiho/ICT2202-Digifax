@@ -1,6 +1,7 @@
 # DigiTrace - An Ethereum Blockchain Visualiser
 [![DigiTrace, by DigiFax](https://pimp-my-readme.webapp.io/pimp-my-readme/wavy-banner?subtitle=by%20DigiFax&title=DigiTrace)](https://pimp-my-readme.webapp.io)
-[![Visitor Counter for webapp.io](https://pimp-my-readme.webapp.io/pimp-my-readme/visitor-counter?page=google.com)}](https://pimp-my-readme.webapp.io)
+
+[![Visitor Counter for webapp.io](https://pimp-my-readme.webapp.io/pimp-my-readme/visitor-counter?page=google.com)](https://pimp-my-readme.webapp.io)
 
 Team DigiFax
 
