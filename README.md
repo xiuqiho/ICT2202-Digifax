@@ -13,7 +13,7 @@ This is a Singapore Institute of Technology Assignment for the module ICT2202 Di
 
 - [Python 3.8.4](https://www.python.org/downloads/) - Base programming language
 - [PyVis 0.1.9](https://pyvis.readthedocs.io/en/latest/) - Visualisation tool
-- [BeautifulSoup 4.10.0](https://beautiful-soup-4.readthedocs.io/en/latest/) - Scrapping labels
+- [BeautifulSoup 4.10.0](https://beautiful-soup-4.readthedocs.io/en/latest/) - Scraping labels
 - [Etherscan-python](https://github.com/pcko1/etherscan-python) - Etherscan API Python wrapper
 
 ---
