@@ -42,7 +42,7 @@ Before getting started, make sure that you are running the correct version of Py
 1. Run ```__init__.py```
 
 ### Demonstration
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/jCUTFR-LUfE/0.jpg)](https://www.youtube.com/watch?v=jCUTFR-LUfE)
+[![YOUTUBE LINK](https://img.youtube.com/vi/jCUTFR-LUfE/0.jpg)](https://www.youtube.com/watch?v=jCUTFR-LUfE)
 
 ---
 
