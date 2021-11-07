@@ -42,7 +42,7 @@ Before getting started, make sure that you are running the correct version of Py
 1. Run ```__init__.py```
 
 ### Demonstration
-[![YOUTUBE LINK](https://img.youtube.com/vi/jCUTFR-LUfE/0.jpg)](https://www.youtube.com/watch?v=jCUTFR-LUfE)
+[![YOUTUBE LINK](https://img.youtube.com/vi/TRL-PZv_ERI/0.jpg)](https://youtu.be/TRL-PZv_ERI)
 
 ---
 
@@ -61,12 +61,6 @@ Before getting started, make sure that you are running the correct version of Py
 - Ho Xiu Qi - ```1802962@sit.singaporetech.edu.sg```
 - Gerald Peh Wei Xiang - ```1802959@sit.singaporetech.edu.sg```
 - Chin Clement - ```1802951@sit.singaporetech.edu.sg```
-
----
-
-## Acknowledgements
-
-\<help me fill>
 
 ---
 
